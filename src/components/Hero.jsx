@@ -1,90 +1,88 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { Carousel } from 'react-bootstrap'
 import './style/index.css'
 import hero1 from '../assets/hero1.jpg'
+import { navigateTo } from '../utils/navigation'
 
 const Hero = () => {
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  const slides = [
+    {
+      image: hero1,
+      title: 'Simple newborn care tracking for everyday parenting',
+      description: 'Follow feeding, growth, vaccination, and health updates from one calm and easy dashboard.',
+      primaryAction: { label: 'Create Account', href: '/register' },
+      secondaryAction: { label: 'Learn More', href: '#education' }
+    },
+    {
+      image: hero1,
+      title: 'Helpful guidance for routines, sleep, and baby nutrition',
+      description: 'Read practical resources and stay organized with reminders that support your daily care routine.',
+      primaryAction: { label: 'View Resources', href: '#education' },
+      secondaryAction: { label: 'How It Works', href: '#works' }
+    },
+    {
+      image: hero1,
+      title: 'Connect with trusted doctors when you need support',
+      description: 'Find pediatric guidance quickly and keep your baby health records ready in one place.',
+      primaryAction: { label: 'Meet Doctors', href: '#pediatricians' },
+      secondaryAction: { label: 'Read Reviews', href: '#testimonial' }
+    }
+  ]
+
+  const handlePrimaryAction = (event, href) => {
+    if (href === '/register') {
+      event.preventDefault()
+      navigateTo('/register')
+    }
+  }
+
+  const handleSelect = (selectedIndex) => {
+    setActiveIndex(selectedIndex)
+  }
+
   return (
-    <section className="hero">
+    <section className="hero" id="home">
+      <Carousel
+        id="heroCarousel"
+        className="hero-carousel"
+        activeIndex={activeIndex}
+        onSelect={handleSelect}
+        interval={3500}
+        controls={slides.length > 1}
+        indicators={slides.length > 1}
+        touch
+      >
+        {slides.map((slide) => (
+          <Carousel.Item key={slide.title}>
+              <img className="d-block w-100" src={slide.image} alt={slide.title} />
+              <div className="hero-overlay"></div>
 
-      <div id="carouselExampleIndicators" className="carousel slide" data-bs-ride="carousel">
+              <div className="hero-content-wrap">
+                <div className="container hero-content-container">
+                  <div className="hero-simple-copy">
+                    <h1>{slide.title}</h1>
+                    <p>{slide.description}</p>
 
-        <div className="carousel-indicators">
-          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" className="active"></button>
-          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1"></button>
-          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2"></button>
-        </div>
-
-        <div className="carousel-inner">
-
-          {/* Slide 1 */}
-          <div className="carousel-item active">
-            <img className="d-block w-100" src={hero1} alt="First slide" />
-
-            <div className="carousel-caption hero-text ">
-              <h1>Newborn Care Management System</h1>
-              <p>
-                Helping parents track baby health, vaccination schedules,
-                and connect with pediatricians easily.
-              </p>
-
-              <div className="hero-buttons">
-                <button className="btn-primary">Get Started</button>
-                <button className="btn-secondary">Learn More</button>
+                    <div className="hero-buttons">
+                      <a
+                        className="hero-btn btn-primary"
+                        href={slide.primaryAction.href}
+                        onClick={(event) => handlePrimaryAction(event, slide.primaryAction.href)}
+                      >
+                        {slide.primaryAction.label}
+                      </a>
+                      <a className="hero-btn btn-secondary" href={slide.secondaryAction.href}>
+                        {slide.secondaryAction.label}
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-
-          </div>
-
-          {/* Slide 2 */}
-          <div className="carousel-item">
-            <img className="d-block w-100" src={hero1} alt="Second slide" />
-
-            <div className="carousel-caption hero-text ">
-              <h1>Track Baby Health Easily</h1>
-              <p>
-                Manage vaccination schedules and monitor your baby's
-                growth and development.
-              </p>
-
-              <div className="hero-buttons">
-                <button className="btn-primary">Start Tracking</button>
-                <button className="btn-secondary">Learn More</button>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Slide 3 */}
-          <div className="carousel-item">
-            <img className="d-block w-100" src={hero1} alt="Third slide" />
-
-            <div className="carousel-caption hero-text ">
-              <h1>Connect with Pediatricians</h1>
-              <p>
-                Get expert advice from certified doctors and
-                ensure the best care for your newborn.
-              </p>
-
-              <div className="hero-buttons">
-                <button className="btn-primary">Find Doctor</button>
-                <button className="btn-secondary">Contact Us</button>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-        <button className="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-          <span className="carousel-control-prev-icon"></span>
-        </button>
-
-        <button className="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-          <span className="carousel-control-next-icon"></span>
-        </button>
-
-      </div>
-
+          </Carousel.Item>
+        ))}
+      </Carousel>
     </section>
   )
 }

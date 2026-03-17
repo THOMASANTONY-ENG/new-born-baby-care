@@ -1,13 +1,24 @@
 import React from 'react'
 import './style/navbar.css'
-
+import { Link } from 'react-router-dom'
 const Navbar = () => {
+    const navLinks = [
+        { label: 'Home', to: '/' },
+        { label: 'Features', to: '/#features' },
+        { label: 'Doctors', to: '/#pediatricians' },
+        { label: 'Resources', to: '/#education' },
+        { label: 'Contact', to: '/#footer' },
+    ]
+
     return (
-        <nav className="navbar navbar-expand-lg bg-light">
+        <nav className="navbar navbar-expand-lg homepage-navbar">
 
-            <div className="container-fluid">
+            <div className="container">
 
-                <a className="navbar-brand" href="#">Baby Care</a>
+                <Link className="navbar-brand" to="/">
+                    <span className="brand-mark">BB</span>
+                    <span className="brand-text">BabyBloom</span>
+                </Link>
 
                 <button
                     className="navbar-toggler"
@@ -25,32 +36,18 @@ const Navbar = () => {
 
                     <ul className="navbar-nav ms-auto">
 
-                        <li className="nav-item">
-                            <a className="nav-link">Home</a>
-                        </li>
-
-                        <li className="nav-item">
-                            <a className="nav-link">Features</a>
-                        </li>
-
-                        <li className="nav-item">
-                            <a className="nav-link">Doctors</a>
-                        </li>
-
-                        <li className="nav-item">
-                            <a className="nav-link">Resources</a>
-                        </li>
-
-                        <li className="nav-item">
-                            <a className="nav-link">Contact</a>
-                        </li>
+                        {navLinks.map((item) => (
+                            <li className="nav-item" key={item.label}>
+                                <Link className="nav-link" to={item.to}>{item.label}</Link>
+                            </li>
+                        ))}
 
                         <li className="nav-item ms-lg-3">
-                            <a className="btn btn-outline-primary">Login</a>
+                            <Link className="btn btn-outline-primary nav-cta secondary" to="/login">Login</Link>
                         </li>
 
                         <li className="nav-item ms-lg-2">
-                            <a className="btn btn-primary">Register</a>
+                            <Link className="btn btn-primary nav-cta" to="/register">Register</Link>
                         </li>
 
                     </ul>

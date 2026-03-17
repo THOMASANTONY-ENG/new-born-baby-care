@@ -1,0 +1,34 @@
+.parent-dashboard-page .dashboard-profile-card,
+.parent-dashboard-page .dashboard-action-card {
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow-md);
+  transition:
+    transform 0.28s ease,
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.parent-dashboard-page .dashboard-action-card {
+  cursor: pointer;
+}
+
+.parent-dashboard-page .dashboard-profile-card:hover,
+.parent-dashboard-page .dashboard-action-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 26px 46px rgba(114, 135, 182, 0.18);
+}
+
+.parent-dashboard-page .dashboard-action-card:hover {
+  border: 1px solid rgba(156, 184, 232, 0.24);
+}
+
+.parent-dashboard-page .dashboard-action-card .btn,
+.parent-dashboard-page .dashboard-profile-card .btn {
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.parent-dashboard-page .dashboard-action-card:hover .btn,
+.parent-dashboard-page .dashboard-profile-card:hover .btn {
+  transform: translateY(-1px);
+}
