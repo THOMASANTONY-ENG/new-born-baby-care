@@ -9,6 +9,7 @@ import ParentDashboard from './pages/Parentdashboard'
 import DashboardLayout from './layouts/DashboardLayout'
 import DashboardSection from './pages/DashboardSection'
 import { getLoggedInUser } from './utils/navigation'
+import ViewBabyProfile from "./pages/ViewBabyProfile"
 
 const ProtectedDashboardLayout = () => {
   const authUser = getLoggedInUser()
@@ -75,6 +76,7 @@ const App = () => {
         />
         <Route path="/dashboard" element={<ProtectedDashboardLayout />}>
           <Route index element={<ParentDashboard />} />
+          <Route path="profile" element={<ViewBabyProfile />} />
           <Route
             path="vaccination"
             element={

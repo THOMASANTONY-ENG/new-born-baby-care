@@ -10,7 +10,7 @@ import {
 const menu = [
   { name: 'Dashboard', path: '/dashboard', icon: <FaHome /> },
   { name: 'Vaccination', path: '/dashboard/vaccination', icon: <FaSyringe /> },
-  { name: 'Appointment', path: '/dashboard/appointment', icon: <FaUserMd /> },
+  { name: 'Appointments', path: '/dashboard/appointment', icon: <FaUserMd /> },
   { name: 'Growth', path: '/dashboard/growth', icon: <FaChartLine /> },
   { name: 'Notes', path: '/dashboard/notes', icon: <FaStickyNote /> },
 ]
@@ -19,10 +19,10 @@ const Sidebar = () => {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <span className="sidebar-eyebrow">Care hub</span>
+        <span className="sidebar-eyebrow">Care Hub</span>
         <h4 className="logo mb-0">BabyBloom</h4>
         <p className="sidebar-copy mb-0">
-          Simple menu for parent, doctor, and admin users.
+          A simple menu for parent, doctor, and admin users.
         </p>
       </div>
 

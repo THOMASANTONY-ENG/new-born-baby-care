@@ -1,9 +1,15 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import '../components/style/Parentdashboard.css'
+import '../components/style/parentdashboard.css'
 import { getLoggedInUser } from '../utils/navigation'
 
 const dashboardCards = [
+  {
+    title: 'Baby Profile',
+    description: 'Review the baby details saved from your dashboard form.',
+    button: 'View Profile',
+    path: '/dashboard/profile',
+  },
   {
     title: 'Vaccination Tracking',
     description: 'Monitor vaccine schedules and reminders.',
@@ -71,7 +77,7 @@ const ParentDashboard = () => {
               </p>
 
               <div className="dashboard-section-card mb-4">
-                <span className="dashboard-section-card-label">Logged in account</span>
+                <span className="dashboard-section-card-label">Logged-in account</span>
                 <h3 className="h5">{loggedInUser?.email}</h3>
                 <p className="mb-0">
                   Your email matched the <strong>{role}</strong> role.

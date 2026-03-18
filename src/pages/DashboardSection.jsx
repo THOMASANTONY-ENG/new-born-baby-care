@@ -25,7 +25,7 @@ const DashboardSection = ({ title, description }) => {
           <article className="dashboard-section-card h-100">
             <span className="dashboard-section-card-label">Current role</span>
             <h3>{role}</h3>
-            <p className="mb-0">Logged in email: {loggedInUser?.email || 'No email found'}</p>
+            <p className="mb-0">Logged-in email: {loggedInUser?.email || 'No email found'}</p>
           </article>
         </div>
 
@@ -34,8 +34,9 @@ const DashboardSection = ({ title, description }) => {
             <span className="dashboard-section-card-label">How it works</span>
             <h3>Email decides the role</h3>
             <p className="mb-0">
-              `admin...` becomes admin, `doctor...` or `dr...` becomes doctor, and every
-              other email becomes parent.
+              Emails that start with "admin" become admin accounts. Emails that start with
+              "doctor" or "dr" become doctor accounts. All other emails become parent
+              accounts.
             </p>
           </article>
         </div>

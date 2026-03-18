@@ -6,6 +6,7 @@ import { getLoggedInUser, logoutLoggedInUser } from '../utils/navigation'
 
 const pageTitles = {
   '/dashboard': 'Dashboard Overview',
+  '/dashboard/profile': 'Baby Profile',
   '/dashboard/vaccination': 'Vaccination Schedule',
   '/dashboard/appointment': 'Appointments',
   '/dashboard/growth': 'Growth Tracking',
@@ -37,7 +38,7 @@ const DashboardLayout = () => {
       <div className="dashboard-main">
         <header className="dashboard-topbar">
           <div>
-            <span className="dashboard-topbar-label">{roleLabels[role]} dashboard</span>
+            <span className="dashboard-topbar-label">{roleLabels[role]} Dashboard</span>
             <h1 className="dashboard-topbar-title mb-1">
               {pageTitles[location.pathname] ?? 'BabyBloom Dashboard'}
             </h1>
