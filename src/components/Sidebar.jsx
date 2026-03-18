@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
+  FaBaby,
   FaHome,
   FaSyringe,
   FaUserMd,
@@ -9,6 +10,7 @@ import {
 
 const menu = [
   { name: 'Dashboard', path: '/dashboard', icon: <FaHome /> },
+  { name: 'Baby Profile', path: '/dashboard/profile', icon: <FaBaby /> },
   { name: 'Vaccination', path: '/dashboard/vaccination', icon: <FaSyringe /> },
   { name: 'Appointments', path: '/dashboard/appointment', icon: <FaUserMd /> },
   { name: 'Growth', path: '/dashboard/growth', icon: <FaChartLine /> },

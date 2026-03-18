@@ -32,3 +32,18 @@
 .parent-dashboard-page .dashboard-profile-card:hover .btn {
   transform: translateY(-1px);
 }
+
+.dashboard-profile-detail-card {
+  height: 100%;
+  padding: 22px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 241, 247, 0.92));
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-profile-detail-card h3 {
+  margin: 10px 0 0;
+  font-size: 1.15rem;
+  color: var(--text);
+  word-break: break-word;
+}

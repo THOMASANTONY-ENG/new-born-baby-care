@@ -26,7 +26,6 @@ const DashboardLayout = () => {
   const role = loggedInUser?.role ?? 'parent'
 
   const handleLogout = () => {
-    window.localStorage.removeItem('babyProfile')
     logoutLoggedInUser()
     navigate('/login')
   }
