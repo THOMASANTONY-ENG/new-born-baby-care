@@ -1,56 +1,8 @@
 import React from 'react'
-import doc1 from '../assets/doc1.jpg'
-import doc2 from '../assets/doc2.jpg'
-import doc3 from '../assets/doc3.jpeg'
-import doc4 from '../assets/doc4.jpeg'
-import doc5 from '../assets/doc5.jpeg'
-import doc7 from '../assets/doc7.png'
 import { FaStar } from 'react-icons/fa'
-
-
-
+import { doctors } from '../data/doctors'
 
 const Pediatrician = () => {
-
-  const doctors = [
-    {
-      name: 'Dr. John Doe',
-      specialty: 'Pediatrician',
-      image: doc1,
-      rating: 4.5
-    },
-    {
-      name: 'Dr. Jane Smith',
-      specialty: 'Pediatrician',
-      image: doc2,
-      rating: 4.8
-    },
-    {
-      name: 'Dr. Robert Johnson',
-      specialty: 'Pediatrician',
-      image: doc3,
-      rating: 4.7
-    },
-    {
-      name: 'Dr. kim lee',
-      specialty: 'Pediatrician',
-      image: doc4,
-      rating: 4.6
-    },
-    {
-      name: 'Dr. annamma  mathew',
-      specialty: 'Pediatrician',
-      image: doc5,
-      rating: 5.0
-    },
-    {
-      name: 'Dr. Abhinav p',
-      specialty: 'gynecologist',
-      image: doc7,
-      rating: 5.0
-    },
-
-  ]
   return (
     <section className='pediatrician-section py-5' id="pediatricians">
       <div className='container text-center mb-5'>

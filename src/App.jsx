@@ -10,6 +10,9 @@ import DashboardLayout from './layouts/DashboardLayout'
 import DashboardSection from './pages/DashboardSection'
 import { getLoggedInUser } from './utils/navigation'
 import ViewBabyProfile from "./pages/ViewBabyProfile"
+import VaccinationSection from './pages/VaccinationSection'
+import AppointmentSection from './pages/AppointmentSection'
+import GrowthSection from './pages/GrowthSection'
 
 const ProtectedDashboardLayout = () => {
   const authUser = getLoggedInUser()
@@ -77,33 +80,9 @@ const App = () => {
         <Route path="/dashboard" element={<ProtectedDashboardLayout />}>
           <Route index element={<ParentDashboard />} />
           <Route path="profile" element={<ViewBabyProfile />} />
-          <Route
-            path="vaccination"
-            element={
-              <DashboardSection
-                title="Vaccination Schedule"
-                description="Track due vaccines and keep doctor visits prepared."
-              />
-            }
-          />
-          <Route
-            path="appointment"
-            element={
-              <DashboardSection
-                title="Appointments"
-                description="Keep visit plans, follow-ups, and care questions together."
-              />
-            }
-          />
-          <Route
-            path="growth"
-            element={
-              <DashboardSection
-                title="Growth Tracking"
-                description="Follow weight, height, and development updates in one place."
-              />
-            }
-          />
+          <Route path="vaccination" element={<VaccinationSection />} />
+          <Route path="appointment" element={<AppointmentSection />} />
+          <Route path="growth" element={<GrowthSection />} />
           <Route
             path="notes"
             element={
