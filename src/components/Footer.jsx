@@ -9,9 +9,10 @@ const Footer = () => {
             <div className="footer-brand">
               <span className="brand-mark">BB</span>
               <div>
+                <span className="section-kicker section-kicker-light">BabyBloom</span>
                 <h3>BabyBloom</h3>
                 <p>
-                  A calm, organized homepage for tracking health routines, expert guidance, and newborn milestones.
+                  A calmer digital home for baby health routines, expert guidance, and everyday parenting milestones.
                 </p>
               </div>
             </div>

@@ -185,20 +185,6 @@ const AppointmentSection = () => {
   )
 
   useEffect(() => {
-    setAppointmentForm((current) => {
-      if (current.babyLabel || !babyOptions.length) {
-        return current
-      }
-
-      return {
-        ...current,
-        babyLabel: babyOptions[0].label,
-        visitType: babyOptions[0].visitType,
-      }
-    })
-  }, [babyOptions.length, babyOptions[0]?.label, babyOptions[0]?.visitType])
-
-  useEffect(() => {
     if (!toastMessage) {
       return undefined
     }

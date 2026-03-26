@@ -91,19 +91,6 @@ const GrowthSection = () => {
   const [savedLogs, setSavedLogs] = useState(() => getSavedGrowthLogs(loggedInUser?.email))
 
   useEffect(() => {
-    setGrowthForm((current) => {
-      if (current.babyLabel || !babySummaries.length) {
-        return current
-      }
-
-      return {
-        ...current,
-        babyLabel: babySummaries[0].label,
-      }
-    })
-  }, [babySummaries.length, babySummaries[0]?.label])
-
-  useEffect(() => {
     if (!toastMessage) {
       return undefined
     }

@@ -37,14 +37,73 @@ const normalizeAppointment = (appointment = {}) => ({
   notes: appointment.notes ?? '',
 })
 
+const parseAppointmentDateTime = (dateValue, timeValue = '') => {
+  if (!dateValue) {
+    return null
+  }
+
+  const parsedDate = new Date(`${dateValue}T00:00:00`)
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null
+  }
+
+  if (!timeValue) {
+    return parsedDate
+  }
+
+  const timeMatch = timeValue.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
+
+  if (!timeMatch) {
+    return parsedDate
+  }
+
+  const [, hourValue, minuteValue, meridiem] = timeMatch
+  let nextHour = Number(hourValue) % 12
+
+  if (meridiem.toUpperCase() === 'PM') {
+    nextHour += 12
+  }
+
+  const nextDate = new Date(parsedDate)
+  nextDate.setHours(nextHour, Number(minuteValue), 0, 0)
+
+  return nextDate
+}
+
+const compareAppointments = (leftAppointment, rightAppointment) => {
+  const leftDateTime = parseAppointmentDateTime(
+    leftAppointment.appointmentDate,
+    leftAppointment.appointmentTime
+  )
+  const rightDateTime = parseAppointmentDateTime(
+    rightAppointment.appointmentDate,
+    rightAppointment.appointmentTime
+  )
+
+  if (!leftDateTime && !rightDateTime) {
+    return leftAppointment.id.localeCompare(rightAppointment.id)
+  }
+
+  if (!leftDateTime) {
+    return 1
+  }
+
+  if (!rightDateTime) {
+    return -1
+  }
+
+  if (leftDateTime.getTime() !== rightDateTime.getTime()) {
+    return leftDateTime.getTime() - rightDateTime.getTime()
+  }
+
+  return leftAppointment.id.localeCompare(rightAppointment.id)
+}
+
 export const getSavedAppointments = (email = '') =>
   readStoredAppointments(getStorageKey(email))
     .map((appointment) => normalizeAppointment(appointment))
-    .sort((left, right) =>
-      `${left.appointmentDate} ${left.appointmentTime}`.localeCompare(
-        `${right.appointmentDate} ${right.appointmentTime}`
-      )
-    )
+    .sort(compareAppointments)
 
 export const saveAppointment = (appointment, email = '') => {
   const storageKey = getStorageKey(email)

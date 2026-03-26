@@ -24,7 +24,7 @@ const Sidebar = () => {
         <span className="sidebar-eyebrow">Care Hub</span>
         <h4 className="logo mb-0">BabyBloom</h4>
         <p className="sidebar-copy mb-0">
-          A simple menu for parent, doctor, and admin users.
+          Move between profile, vaccines, visits, growth, and notes in one place.
         </p>
       </div>
 
@@ -45,7 +45,7 @@ const Sidebar = () => {
 
       <div className="sidebar-summary">
         <span className="sidebar-summary-label">Today</span>
-        <strong>Open the section you need and continue your work.</strong>
+        <strong>Start from the dashboard, then jump into the care task you need.</strong>
       </div>
     </aside>
   )

@@ -32,9 +32,10 @@ const Educational = () => {
     <section className='education-section py-5' id="education">
       <div className="container">
         <div className="text-center mb-4">
-          <h2>Educational Resources</h2>
+          <span className="section-kicker">Trusted reading</span>
+          <h2>Educational resources for calmer care decisions</h2>
           <p className='text-muted'>
-            Learn essential newborn care tips, health guidance, and practical support from trusted content.
+            Learn the basics faster with practical topics parents come back to again and again.
           </p>
         </div>
 
@@ -46,7 +47,7 @@ const Educational = () => {
                 <div className='card-body text-center'>
                   <h5 className='card-title'>{item.title}</h5>
                   <p className='card-text'>{item.description}</p>
-                  <button className='btn btn-primary'>Learn More</button>
+                  <button className='btn btn-primary'>Open Resource</button>
                 </div>
               </div>
             </div>

@@ -32,9 +32,10 @@ const Works = () => {
       <div className="container">
 
         <div className="text-center mb-5">
-          <h2 className="fw-bold">How It Works</h2>
+          <span className="section-kicker section-kicker-light">How it works</span>
+          <h2 className="fw-bold">A simpler flow from setup to daily care</h2>
           <p className="text-muted">
-            Follow these simple steps to manage your newborn's health easily.
+            Start once, then come back for the routines and records you need most.
           </p>
         </div>
 

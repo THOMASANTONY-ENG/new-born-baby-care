@@ -62,6 +62,7 @@ const Hero = () => {
               <div className="hero-content-wrap">
                 <div className="container hero-content-container">
                   <div className="hero-simple-copy">
+                    <span className="hero-kicker">Daily care, organized with calm</span>
                     <h1>{slide.title}</h1>
                     <p>{slide.description}</p>
 
@@ -76,6 +77,12 @@ const Hero = () => {
                       <a className="hero-btn btn-secondary" href={slide.secondaryAction.href}>
                         {slide.secondaryAction.label}
                       </a>
+                    </div>
+
+                    <div className="hero-highlights" aria-label="BabyBloom highlights">
+                      <span>Vaccines and visits</span>
+                      <span>Growth tracking</span>
+                      <span>Trusted guidance</span>
                     </div>
                   </div>
                 </div>

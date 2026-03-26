@@ -6,9 +6,10 @@ const Pediatrician = () => {
   return (
     <section className='pediatrician-section py-5' id="pediatricians">
       <div className='container text-center mb-5'>
-        <h2>Our Pediatricians</h2>
+        <span className="section-kicker">Expert support</span>
+        <h2>Pediatricians parents can reach with confidence</h2>
         <p className='text-muted'>
-          Connect with our experienced pediatricians for expert advice and support.
+          Browse trusted specialists and keep the next step close when you need advice.
         </p>
       </div>
       <div className="container doctor-slider-shell">
@@ -34,7 +35,7 @@ const Pediatrician = () => {
                     ))}
                     <span className="ms-2">{doc.rating}</span>
                   </div>
-                  <button className='btn btn-primary mt-2'>Book Appointment</button>
+                  <button className='btn btn-primary mt-2'>Book Visit</button>
                 </div>
               </div>
             ))}

@@ -98,9 +98,10 @@ const Testimonial = () => {
     <section className="testimonial-section py-5" id="testimonial">
       <Container>
         <div className="text-center mb-5">
-          <h2 className="testimonial-title">What Parents Say</h2>
+          <span className="section-kicker">Parent feedback</span>
+          <h2 className="testimonial-title">What families value most about BabyBloom</h2>
           <p className="testimonial-subtitle">
-            Real feedback from families using BabyBloom to manage routines, milestones, and health updates.
+            Real feedback from families using BabyBloom to keep routines, milestones, and health updates organized.
           </p>
         </div>
 

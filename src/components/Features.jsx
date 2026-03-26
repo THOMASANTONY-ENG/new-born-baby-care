@@ -27,10 +27,10 @@ const Features = () => {
   return (
     <section className="features py-5" id="features">
       <div className="container text-center">
-        <h2 className="features-title">Our Features</h2>
+        <span className="section-kicker">Core tools</span>
+        <h2 className="features-title">Everything parents check most often</h2>
         <p className="features-description">
-          Powerful tools designed to help parents monitor baby health,
-          track vaccinations, and connect with pediatricians easily.
+          One place for the routines, reminders, and records that matter most in the first years.
         </p>
         <div className="row g-4 align-items-stretch">
           {features.map((feature, index) => (

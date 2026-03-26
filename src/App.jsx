@@ -7,12 +7,12 @@ import LoginPage from './pages/LoginPage'
 import Home from './pages/Home'
 import ParentDashboard from './pages/Parentdashboard'
 import DashboardLayout from './layouts/DashboardLayout'
-import DashboardSection from './pages/DashboardSection'
 import { getLoggedInUser } from './utils/navigation'
 import ViewBabyProfile from "./pages/ViewBabyProfile"
 import VaccinationSection from './pages/VaccinationSection'
 import AppointmentSection from './pages/AppointmentSection'
 import GrowthSection from './pages/GrowthSection'
+import NotesSection from './pages/NotesSection'
 
 const ProtectedDashboardLayout = () => {
   const authUser = getLoggedInUser()
@@ -83,15 +83,7 @@ const App = () => {
           <Route path="vaccination" element={<VaccinationSection />} />
           <Route path="appointment" element={<AppointmentSection />} />
           <Route path="growth" element={<GrowthSection />} />
-          <Route
-            path="notes"
-            element={
-              <DashboardSection
-                title="Care Notes"
-                description="Save daily observations and health reminders for quick review."
-              />
-            }
-          />
+          <Route path="notes" element={<NotesSection />} />
         </Route>
       </Routes>
 

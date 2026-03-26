@@ -274,6 +274,18 @@ const parseDate = (value) => {
   return Number.isNaN(parsedDate.getTime()) ? null : parsedDate
 }
 
+const addDays = (dateValue, days) => {
+  const parsedDate = parseDate(dateValue)
+
+  if (!parsedDate) {
+    return null
+  }
+
+  const nextDate = new Date(parsedDate)
+  nextDate.setDate(nextDate.getDate() + days)
+  return nextDate
+}
+
 const calculateAgeDays = (dob) => {
   const parsedDob = parseDate(dob)
 
@@ -348,7 +360,12 @@ const VaccinationSection = () => {
   const savedProfile = getSavedBabyProfile(loggedInUser?.email)
   const familyType = savedProfile?.familyType === 'twins' ? 'twins' : 'single'
   const babies = savedProfile?.babies ?? []
-  const availableBabies = babies.filter((profile) => hasProfileData(profile))
+  const availableBabies = babies
+    .map((profile, index) => ({
+      profile,
+      index,
+    }))
+    .filter(({ profile }) => hasProfileData(profile))
 
   if (role !== 'parent') {
     return (
@@ -397,23 +414,39 @@ const VaccinationSection = () => {
     )
   }
 
-  const babySummaries = availableBabies.map((profile, index) => {
+  const babySummaries = availableBabies.map(({ profile, index }) => {
     const ageDays = calculateAgeDays(profile.dob)
     const nextDueStage = getNextDueStage(ageDays)
+    const dueDate = addDays(profile.dob, nextDueStage.minAgeDays)
 
     return {
       profile,
       index,
       ageDays,
       nextDueStage,
+      dueDate,
       displayName: profile.name || getBabyLabel(familyType, index),
       label: getBabyLabel(familyType, index),
     }
   })
 
   const babiesNeedingDob = babySummaries.filter(({ ageDays }) => ageDays === null).length
-  const nextDueSummary =
-    babySummaries.find(({ ageDays }) => ageDays !== null)?.nextDueStage?.ageLabel ?? 'Birth'
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const nextDueCandidate = babySummaries
+    .filter(({ dueDate }) => Boolean(dueDate))
+    .reduce((closest, current) => {
+      if (!closest) {
+        return current
+      }
+
+      return Math.abs(current.dueDate - today) < Math.abs(closest.dueDate - today)
+        ? current
+        : closest
+    }, null)
+  const nextDueSummary = nextDueCandidate
+    ? `${nextDueCandidate.displayName}: ${nextDueCandidate.nextDueStage.ageLabel}`
+    : 'Birth'
 
   return (
     <section className="dashboard-section-panel parent-dashboard-page vaccination-page">
@@ -459,7 +492,7 @@ const VaccinationSection = () => {
       </div>
 
       <div className="row g-4">
-        {babySummaries.map(({ profile, index, ageDays, nextDueStage, displayName, label }) => (
+        {babySummaries.map(({ profile, ageDays, nextDueStage, displayName, label }) => (
           <div className={familyType === 'twins' ? 'col-xl-6' : 'col-12'} key={label}>
             <article className="vaccination-baby-card h-100">
               <div className="vaccination-baby-header">
@@ -467,8 +500,12 @@ const VaccinationSection = () => {
                   <span className="dashboard-section-card-label">{label}</span>
                   <h3>{displayName}</h3>
                 </div>
-                <span className="vaccination-status vaccination-status-due">
-                  Next: {nextDueStage.ageLabel}
+                <span
+                  className={`vaccination-status vaccination-status-${
+                    ageDays === null ? 'planned' : 'due'
+                  }`}
+                >
+                  {ageDays === null ? 'Needs DOB' : `Next: ${nextDueStage.ageLabel}`}
                 </span>
               </div>
 

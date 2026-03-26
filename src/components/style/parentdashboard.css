@@ -1,10 +1,11 @@
 .parent-dashboard-page .dashboard-profile-card,
 .parent-dashboard-page .dashboard-action-card {
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: var(--shadow-md);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 36px rgba(53, 72, 104, 0.08);
+  border: 1px solid rgba(34, 50, 79, 0.05);
   transition:
-    transform 0.28s ease,
+    transform 0.22s ease,
     box-shadow 0.28s ease,
     border-color 0.28s ease;
 }
@@ -15,12 +16,12 @@
 
 .parent-dashboard-page .dashboard-profile-card:hover,
 .parent-dashboard-page .dashboard-action-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 26px 46px rgba(114, 135, 182, 0.18);
+  transform: translateY(-4px);
+  box-shadow: 0 22px 40px rgba(53, 72, 104, 0.1);
 }
 
 .parent-dashboard-page .dashboard-action-card:hover {
-  border: 1px solid rgba(156, 184, 232, 0.24);
+  border: 1px solid rgba(166, 192, 235, 0.24);
 }
 
 .parent-dashboard-page .dashboard-action-card .btn,
@@ -37,8 +38,34 @@
   height: 100%;
   padding: 22px;
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 241, 247, 0.92));
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 255, 0.96));
+  box-shadow: 0 12px 24px rgba(53, 72, 104, 0.06);
+  border: 1px solid rgba(34, 50, 79, 0.04);
+}
+
+.dashboard-overview-hero {
+  padding: 24px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(246, 249, 255, 0.98), rgba(255, 244, 248, 0.92));
+  box-shadow: 0 14px 28px rgba(53, 72, 104, 0.06);
+  border: 1px solid rgba(34, 50, 79, 0.05);
+}
+
+.dashboard-overview-status {
+  display: grid;
+  gap: 8px;
+  min-width: 220px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(34, 50, 79, 0.08);
+}
+
+.dashboard-overview-status p,
+.dashboard-overview-summary-card p,
+.dashboard-shortcut-card p,
+.dashboard-care-status-card p {
+  color: var(--text-soft);
 }
 
 .dashboard-profile-detail-card h3 {
@@ -46,6 +73,38 @@
   font-size: 1.15rem;
   color: var(--text);
   word-break: break-word;
+}
+
+.dashboard-overview-summary-card,
+.dashboard-shortcut-card,
+.dashboard-care-status-card {
+  height: 100%;
+  padding: 20px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(249, 251, 255, 0.96));
+  box-shadow: 0 12px 24px rgba(53, 72, 104, 0.06);
+  border: 1px solid rgba(34, 50, 79, 0.05);
+}
+
+.dashboard-shortcut-card,
+.dashboard-care-status-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-shortcut-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dashboard-shortcut-card h3,
+.dashboard-care-status-card h3 {
+  color: var(--text);
+}
+
+.dashboard-care-status-card .btn {
+  margin-top: auto !important;
 }
 
 .dashboard-saved-profile {
@@ -56,15 +115,16 @@
 .dashboard-form-intro {
   padding: 20px 22px;
   border-radius: 22px;
-  background: linear-gradient(135deg, rgba(244, 248, 255, 0.92), rgba(255, 241, 247, 0.9));
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, rgba(246, 249, 255, 0.96), rgba(255, 244, 248, 0.92));
+  box-shadow: 0 12px 24px rgba(53, 72, 104, 0.06);
+  border: 1px solid rgba(34, 50, 79, 0.05);
 }
 
 .dashboard-family-toggle {
   padding: 18px 20px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(114, 135, 182, 0.16);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(34, 50, 79, 0.08);
 }
 
 .dashboard-twin-editor-card,
@@ -72,8 +132,9 @@
   height: 100%;
   padding: 22px;
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(245, 249, 255, 0.92));
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(249, 251, 255, 0.96));
+  box-shadow: 0 12px 24px rgba(53, 72, 104, 0.06);
+  border: 1px solid rgba(34, 50, 79, 0.05);
 }
 
 .dashboard-twin-editor-header {
@@ -89,6 +150,10 @@
 .appointment-stage-card,
 .appointment-booking-card,
 .appointment-saved-card,
+.notes-summary-card,
+.notes-form-card,
+.notes-log-card,
+.notes-entry-card,
 .growth-guide-card,
 .growth-summary-card,
 .growth-baby-card,
@@ -96,8 +161,9 @@
 .growth-form-card,
 .growth-log-card {
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(245, 249, 255, 0.92));
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(249, 251, 255, 0.96));
+  box-shadow: 0 12px 24px rgba(53, 72, 104, 0.06);
+  border: 1px solid rgba(34, 50, 79, 0.05);
 }
 
 .vaccination-summary-card,
@@ -106,6 +172,8 @@
 .appointment-summary-card,
 .appointment-baby-card,
 .appointment-booking-card,
+.notes-summary-card,
+.notes-form-card,
 .growth-guide-card,
 .growth-summary-card,
 .growth-baby-card,
@@ -121,6 +189,10 @@
 .appointment-stage-card h4,
 .appointment-booking-title,
 .appointment-saved-card h4,
+.notes-summary-card h3,
+.notes-form-title,
+.notes-log-card h3,
+.notes-entry-card h4,
 .growth-guide-card h3,
 .growth-summary-card h3,
 .growth-baby-card h3,
@@ -252,6 +324,60 @@
   margin-bottom: 12px;
   color: var(--text-soft);
   font-size: 0.92rem;
+}
+
+.notes-log-card,
+.notes-entry-card {
+  padding: 18px;
+}
+
+.notes-log-header,
+.notes-entry-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.notes-log-header {
+  margin-bottom: 16px;
+}
+
+.notes-entry-card + .notes-entry-card {
+  margin-top: 14px;
+}
+
+.notes-log-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 10px 0 12px;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+.notes-category-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 232, 241, 0.95);
+  color: #a65b75;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.notes-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.notes-form-card textarea.form-control {
+  min-height: 140px;
 }
 
 .growth-stage-card,
@@ -403,8 +529,9 @@
   height: 100%;
   padding: 18px;
   border-radius: 20px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 248, 255, 0.9));
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 255, 0.96));
+  box-shadow: 0 10px 20px rgba(53, 72, 104, 0.05);
+  border: 1px solid rgba(34, 50, 79, 0.05);
 }
 
 .dashboard-profile-mini-card strong {
@@ -417,8 +544,8 @@
 .dashboard-profile-empty-state {
   padding: 18px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px dashed rgba(114, 135, 182, 0.28);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px dashed rgba(93, 115, 159, 0.24);
   color: var(--text-soft);
 }
 
@@ -427,10 +554,10 @@
   align-items: center;
   padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(223, 244, 239, 0.95);
-  color: #3f6f66;
+  background: rgba(215, 240, 232, 0.95);
+  color: #365d56;
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -438,6 +565,11 @@
 .dashboard-profile-card .btn[disabled] {
   opacity: 0.68;
   box-shadow: none;
+}
+
+.dashboard-inline-hint {
+  color: var(--text-soft);
+  font-size: 0.92rem;
 }
 
 .dashboard-toast {
@@ -448,9 +580,9 @@
   width: min(320px, calc(100vw - 32px));
   padding: 16px 18px;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(114, 135, 182, 0.96), rgba(156, 184, 232, 0.94));
+  background: linear-gradient(135deg, rgba(93, 115, 159, 0.96), rgba(166, 192, 235, 0.94));
   color: #fff;
-  box-shadow: 0 26px 46px rgba(114, 135, 182, 0.28);
+  box-shadow: 0 22px 42px rgba(53, 72, 104, 0.2);
 }
 
 .dashboard-toast strong {
@@ -466,9 +598,11 @@
 }
 
 @media (max-width: 767px) {
+  .dashboard-overview-hero,
   .dashboard-form-intro,
   .dashboard-twin-editor-card,
   .dashboard-twin-summary-card,
+  .dashboard-care-status-card,
   .vaccination-summary-card,
   .vaccination-baby-card,
   .vaccination-stage-card,
@@ -493,6 +627,8 @@
   .vaccination-stage-header,
   .appointment-baby-header,
   .appointment-saved-header,
+  .notes-log-header,
+  .notes-entry-header,
   .growth-baby-header,
   .growth-log-header {
     flex-direction: column;
@@ -501,5 +637,9 @@
   .dashboard-toast {
     right: 16px;
     bottom: 16px;
+  }
+
+  .dashboard-overview-status {
+    min-width: 100%;
   }
 }

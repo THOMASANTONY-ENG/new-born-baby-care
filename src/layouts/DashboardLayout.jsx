@@ -5,7 +5,7 @@ import '../components/style/dashboardlayout.css'
 import { getLoggedInUser, logoutLoggedInUser } from '../utils/navigation'
 
 const pageTitles = {
-  '/dashboard': 'Dashboard Overview',
+  '/dashboard': 'Care Overview',
   '/dashboard/profile': 'Baby Profile',
   '/dashboard/vaccination': 'Vaccination Schedule',
   '/dashboard/appointment': 'Appointments',
@@ -46,8 +46,8 @@ const DashboardLayout = () => {
             </p>
           </div>
 
-          <button className="btn btn-danger btn-sm" onClick={handleLogout}>
-            Logout
+          <button className="btn btn-outline-primary btn-sm" onClick={handleLogout}>
+            Log out
           </button>
         </header>
 
