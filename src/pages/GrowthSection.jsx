@@ -4,6 +4,8 @@ import '../components/style/parentdashboard.css'
 import { getSavedBabyProfile } from '../utils/babyProfile'
 import { getLoggedInUser } from '../utils/navigation'
 import { getSavedGrowthLogs, saveGrowthLog } from '../utils/growthLogs'
+import { getEffectiveUserEmail, getActivePatientEmail } from '../utils/doctorNavigation'
+import ActivePatientBanner from '../components/ActivePatientBanner'
 
 const getBabyLabel = (familyType, index) =>
   familyType === 'twins' ? `Twin ${index === 0 ? 'A' : 'B'}` : 'Baby'
@@ -67,10 +69,113 @@ const getTodayDate = () => {
   return `${today.getFullYear()}-${month}-${day}`
 }
 
+/** Format ISO date string "YYYY-MM-DD" → "28 Mar 2026" */
+const formatDate = (value) => {
+  if (!value) return 'No date'
+  const d = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return value
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+/** Extract numeric kg/cm from a string like "7.5 kg" → 7.5 */
+const extractNum = (value) => {
+  if (!value) return null
+  const match = String(value).match(/([\d.]+)/)
+  return match ? parseFloat(match[1]) : null
+}
+
+/** Pure-SVG growth chart for weight or height over time */
+const GrowthChart = ({ logs, field, label, color, unit }) => {
+  // logs newest-first, chart needs oldest-first
+  const ordered = [...logs].reverse().slice(-8)
+  const values = ordered.map((l) => extractNum(l[field]))
+  const validValues = values.filter((v) => v !== null)
+
+  if (validValues.length < 2) {
+    return (
+      <div style={{ padding: '18px', color: 'var(--text-soft)', fontSize: '0.9rem' }}>
+        Add at least 2 records to see the {label.toLowerCase()} chart.
+      </div>
+    )
+  }
+
+  const W = 400
+  const H = 120
+  const PAD = { top: 16, right: 16, bottom: 28, left: 36 }
+  const chartW = W - PAD.left - PAD.right
+  const chartH = H - PAD.top - PAD.bottom
+
+  const min = Math.min(...validValues)
+  const max = Math.max(...validValues)
+  const range = max - min || 1
+
+  const xOf = (i) => PAD.left + (i / (ordered.length - 1)) * chartW
+  const yOf = (v) => PAD.top + chartH - ((v - min) / range) * chartH
+
+  const points = ordered
+    .map((l, i) => {
+      const v = extractNum(l[field])
+      return v !== null ? { x: xOf(i), y: yOf(v), v, date: l.recordDate } : null
+    })
+    .filter(Boolean)
+
+  const polyline = points.map((p) => `${p.x},${p.y}`).join(' ')
+  // fill area
+  const area = [
+    `${points[0].x},${PAD.top + chartH}`,
+    ...points.map((p) => `${p.x},${p.y}`),
+    `${points[points.length - 1].x},${PAD.top + chartH}`,
+  ].join(' ')
+
+  return (
+    <div style={{ width: '100%', overflowX: 'auto' }}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        style={{ width: '100%', height: H, display: 'block' }}
+        aria-label={`${label} growth chart`}
+      >
+        {/* grid lines */}
+        {[0, 0.5, 1].map((t) => {
+          const y = PAD.top + chartH * (1 - t)
+          const val = (min + range * t).toFixed(1)
+          return (
+            <g key={t}>
+              <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
+                stroke="rgba(93,115,159,0.12)" strokeWidth="1" strokeDasharray="4 3" />
+              <text x={PAD.left - 4} y={y + 4} textAnchor="end"
+                fontSize="9" fill="rgba(93,115,159,0.7)">{val}</text>
+            </g>
+          )
+        })}
+        {/* area fill */}
+        <polygon points={area} fill={color} opacity="0.12" />
+        {/* line */}
+        <polyline points={polyline} fill="none" stroke={color} strokeWidth="2.5"
+          strokeLinejoin="round" strokeLinecap="round" />
+        {/* dots */}
+        {points.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="4.5" fill="#fff" stroke={color} strokeWidth="2" />
+          </g>
+        ))}
+        {/* x-axis labels: first + last */}
+        {[0, points.length - 1].map((i) => (
+          <text key={i} x={points[i].x} y={H - 6} textAnchor="middle"
+            fontSize="9" fill="rgba(93,115,159,0.7)">
+            {formatDate(ordered[i].recordDate)}
+          </text>
+        ))}
+      </svg>
+    </div>
+  )
+}
+
 const GrowthSection = () => {
   const loggedInUser = getLoggedInUser()
   const role = loggedInUser?.role ?? 'parent'
-  const savedProfile = getSavedBabyProfile(loggedInUser?.email)
+  const isDoctor = role === 'doctor'
+  const effectiveEmail = getEffectiveUserEmail(loggedInUser)
+  const savedProfile = getSavedBabyProfile(effectiveEmail)
   const familyType = savedProfile?.familyType === 'twins' ? 'twins' : 'single'
   const babies = savedProfile?.babies ?? []
   const availableBabies = babies.filter((profile) => hasProfileData(profile))
@@ -88,7 +193,7 @@ const GrowthSection = () => {
     height: '',
     note: '',
   }))
-  const [savedLogs, setSavedLogs] = useState(() => getSavedGrowthLogs(loggedInUser?.email))
+  const [savedLogs, setSavedLogs] = useState(() => getSavedGrowthLogs(effectiveEmail))
 
   useEffect(() => {
     if (!toastMessage) {
@@ -127,7 +232,7 @@ const GrowthSection = () => {
       note: growthForm.note,
     }
 
-    const nextSavedLogs = saveGrowthLog(nextLog, loggedInUser?.email)
+    const nextSavedLogs = saveGrowthLog(nextLog, effectiveEmail)
     setSavedLogs(nextSavedLogs)
     setGrowthForm({
       babyLabel: babySummaries[0]?.label ?? '',
@@ -139,7 +244,24 @@ const GrowthSection = () => {
     setToastMessage('Growth entry saved successfully.')
   }
 
-  if (role !== 'parent') {
+  if (isDoctor && !getActivePatientEmail()) {
+    return (
+      <section className="dashboard-section-panel parent-dashboard-page">
+        <div className="dashboard-section-intro">
+          <span className="dashboard-section-label">Provider view</span>
+          <h2 className="dashboard-section-title">No Patient Selected</h2>
+          <p className="dashboard-section-copy">
+            Please return to your patient list to select an active patient chart before updating growth records.
+          </p>
+        </div>
+        <div className="dashboard-section-card">
+          <Link className="btn btn-primary" to="/dashboard">Return to Patient List</Link>
+        </div>
+      </section>
+    )
+  }
+
+  if (role === 'admin') {
     return (
       <section className="dashboard-section-panel parent-dashboard-page">
         <div className="dashboard-section-intro">
@@ -186,9 +308,10 @@ const GrowthSection = () => {
 
   return (
     <section className="dashboard-section-panel parent-dashboard-page growth-page">
+      <ActivePatientBanner />
       <div className="dashboard-section-intro">
         <span className="dashboard-section-label">Growth</span>
-        <h2 className="dashboard-section-title">Growth tracker for your family</h2>
+        <h2 className="dashboard-section-title">Growth tracker for {isDoctor ? 'this' : 'your'} family</h2>
         <p className="dashboard-section-copy mb-0">
           Save weight and height records regularly so parents can follow each baby&apos;s growth
           clearly.
@@ -250,7 +373,7 @@ const GrowthSection = () => {
         <div className="col-md-4">
           <article className="growth-summary-card h-100">
             <span className="dashboard-section-card-label">Latest update</span>
-            <h3>{latestRecordDate}</h3>
+            <h3>{formatDate(latestRecordDate)}</h3>
             <p className="mb-0">Record weight and height after checkups or routine measurements.</p>
           </article>
         </div>
@@ -372,6 +495,14 @@ const GrowthSection = () => {
               </span>
             </div>
 
+          {savedLogs.length >= 2 && (
+              <div className="mb-3">
+                <span className="dashboard-section-card-label" style={{ display: 'block', marginBottom: 8 }}>Weight trend (kg)</span>
+                <GrowthChart logs={savedLogs} field="weight" label="Weight" color="#5d739f" unit="kg" />
+                <span className="dashboard-section-card-label" style={{ display: 'block', margin: '12px 0 8px' }}>Height trend (cm)</span>
+                <GrowthChart logs={savedLogs} field="height" label="Height" color="#467165" unit="cm" />
+              </div>
+            )}
             {savedLogs.length ? (
               <div className="growth-log-list">
                 {savedLogs.map((log) => (
@@ -381,7 +512,7 @@ const GrowthSection = () => {
                         <span className="dashboard-section-card-label">{log.babyLabel}</span>
                         <h4>{log.babyName}</h4>
                       </div>
-                      <span className="growth-chip">{log.recordDate}</span>
+                      <span className="growth-chip">{formatDate(log.recordDate)}</span>
                     </div>
 
                     <div className="growth-log-meta">
@@ -440,7 +571,7 @@ const GrowthSection = () => {
                       {babyLogs.map((log) => (
                         <article className="growth-log-card" key={log.id}>
                           <div className="growth-log-header">
-                            <strong>{log.recordDate}</strong>
+                            <strong>{formatDate(log.recordDate)}</strong>
                           </div>
                           <div className="growth-record-measurements">
                             <span className="growth-measure-chip">

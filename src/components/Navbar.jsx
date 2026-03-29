@@ -7,7 +7,7 @@ const Navbar = () => {
         { label: 'Features', to: '/#features' },
         { label: 'Doctors', to: '/#pediatricians' },
         { label: 'Resources', to: '/#education' },
-        { label: 'Contact', to: '/#footer' },
+        { label: 'Contact', to: '/#contact' },
     ]
 
     return (

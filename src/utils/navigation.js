@@ -1,3 +1,6 @@
+import { getDoctorByEmail, validateDoctorCredentials } from './doctors'
+import { validateUser } from './users'
+
 const AUTH_STORAGE_KEY = 'babyBloomAuth'
 
 export const navigateTo = (path) => {
@@ -28,11 +31,47 @@ export const getRoleFromEmail = (email = '') => {
     return 'admin'
   }
 
-  if (lowerCaseEmail.startsWith('doctor') || lowerCaseEmail.startsWith('dr')) {
+  if (getDoctorByEmail(lowerCaseEmail)) {
     return 'doctor'
   }
 
   return 'parent'
+}
+
+export const authenticateUser = (email = '', password = '') => {
+  const normalizedEmail = email.trim().toLowerCase()
+  const role = getRoleFromEmail(normalizedEmail)
+
+  if (!normalizedEmail) {
+    return {
+      success: false,
+      message: 'Enter an email address to continue.',
+    }
+  }
+
+  let isValid = false
+
+  if (role === 'admin') {
+    isValid = password === 'admin123'
+  } else if (role === 'doctor') {
+    const doctor = validateDoctorCredentials(normalizedEmail, password)
+    isValid = doctor !== null && doctor !== false
+  } else if (role === 'parent') {
+    const parent = validateUser(normalizedEmail, password)
+    isValid = parent !== null && parent !== false
+  }
+
+  if (!isValid) {
+    return {
+      success: false,
+      message: 'Wrong email or password.',
+    }
+  }
+
+  return {
+    success: true,
+    user: saveLoggedInUser(normalizedEmail),
+  }
 }
 
 export const saveLoggedInUser = (email) => {

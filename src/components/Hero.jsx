@@ -31,10 +31,13 @@ const Hero = () => {
     }
   ]
 
-  const handlePrimaryAction = (event, href) => {
-    if (href === '/register') {
-      event.preventDefault()
-      navigateTo('/register')
+  const handleAction = (event, href) => {
+    event.preventDefault()
+    if (href.startsWith('#')) {
+      // Push hash to URL so App.jsx useEffect scroll handler fires
+      window.location.hash = href.slice(1)
+    } else {
+      navigateTo(href)
     }
   }
 
@@ -62,7 +65,6 @@ const Hero = () => {
               <div className="hero-content-wrap">
                 <div className="container hero-content-container">
                   <div className="hero-simple-copy">
-                    <span className="hero-kicker">Daily care, organized with calm</span>
                     <h1>{slide.title}</h1>
                     <p>{slide.description}</p>
 
@@ -70,11 +72,15 @@ const Hero = () => {
                       <a
                         className="hero-btn btn-primary"
                         href={slide.primaryAction.href}
-                        onClick={(event) => handlePrimaryAction(event, slide.primaryAction.href)}
+                        onClick={(event) => handleAction(event, slide.primaryAction.href)}
                       >
                         {slide.primaryAction.label}
                       </a>
-                      <a className="hero-btn btn-secondary" href={slide.secondaryAction.href}>
+                      <a
+                        className="hero-btn btn-secondary"
+                        href={slide.secondaryAction.href}
+                        onClick={(event) => handleAction(event, slide.secondaryAction.href)}
+                      >
                         {slide.secondaryAction.label}
                       </a>
                     </div>

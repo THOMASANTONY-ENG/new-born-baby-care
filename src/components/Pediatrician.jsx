@@ -1,8 +1,16 @@
 import React from 'react'
 import { FaStar } from 'react-icons/fa'
-import { doctors } from '../data/doctors'
+import { getAvailableDoctors } from '../utils/doctors'
+import { getLoggedInUser, navigateTo } from '../utils/navigation'
 
 const Pediatrician = () => {
+  const doctors = getAvailableDoctors()
+
+  const handleBookVisit = () => {
+    const user = getLoggedInUser()
+    navigateTo(user ? '/dashboard/appointment' : '/register')
+  }
+
   return (
     <section className='pediatrician-section py-5' id="pediatricians">
       <div className='container text-center mb-5'>
@@ -35,7 +43,7 @@ const Pediatrician = () => {
                     ))}
                     <span className="ms-2">{doc.rating}</span>
                   </div>
-                  <button className='btn btn-primary mt-2'>Book Visit</button>
+                  <button className='btn btn-primary mt-2' onClick={handleBookVisit}>Book Visit</button>
                 </div>
               </div>
             ))}

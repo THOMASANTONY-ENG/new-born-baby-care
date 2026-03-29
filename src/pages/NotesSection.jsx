@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import '../components/style/parentdashboard.css'
 import { getSavedBabyProfile } from '../utils/babyProfile'
 import { deleteCareNote, getSavedCareNotes, saveCareNote } from '../utils/careNotes'
 import { getLoggedInUser } from '../utils/navigation'
+import { getEffectiveUserEmail, getActivePatientEmail } from '../utils/doctorNavigation'
+import ActivePatientBanner from '../components/ActivePatientBanner'
 
 const noteCategories = ['Daily care', 'Feeding', 'Sleep', 'Health', 'Reminder']
 
@@ -48,7 +51,9 @@ const createInitialNoteForm = (firstTargetLabel = 'Family') => ({
 const NotesSection = () => {
   const loggedInUser = getLoggedInUser()
   const role = loggedInUser?.role ?? 'parent'
-  const savedProfile = getSavedBabyProfile(loggedInUser?.email)
+  const isDoctor = role === 'doctor'
+  const effectiveEmail = getEffectiveUserEmail(loggedInUser)
+  const savedProfile = getSavedBabyProfile(effectiveEmail)
   const familyType = savedProfile?.familyType === 'twins' ? 'twins' : 'single'
   const babies = savedProfile?.babies ?? []
   const availableBabies = babies.filter((profile) => hasProfileData(profile))
@@ -60,7 +65,7 @@ const NotesSection = () => {
   const [toastMessage, setToastMessage] = useState('')
   const [editingNoteId, setEditingNoteId] = useState(null)
   const [noteForm, setNoteForm] = useState(() => createInitialNoteForm(noteTargets[0]?.label))
-  const [savedNotes, setSavedNotes] = useState(() => getSavedCareNotes(loggedInUser?.email))
+  const [savedNotes, setSavedNotes] = useState(() => getSavedCareNotes(effectiveEmail))
 
   useEffect(() => {
     if (!toastMessage) {
@@ -101,7 +106,7 @@ const NotesSection = () => {
       updatedAt: new Date().toISOString(),
     }
 
-    const nextSavedNotes = saveCareNote(nextNote, loggedInUser?.email)
+    const nextSavedNotes = saveCareNote(nextNote, effectiveEmail)
     setSavedNotes(nextSavedNotes)
     setEditingNoteId(null)
     setNoteForm(createInitialNoteForm(noteTargets[0]?.label))
@@ -125,7 +130,7 @@ const NotesSection = () => {
   }
 
   const handleDeleteNote = (noteId) => {
-    const nextSavedNotes = deleteCareNote(noteId, loggedInUser?.email)
+    const nextSavedNotes = deleteCareNote(noteId, effectiveEmail)
 
     setSavedNotes(nextSavedNotes)
 
@@ -136,20 +141,32 @@ const NotesSection = () => {
     setToastMessage('Care note removed.')
   }
 
-  if (role !== 'parent') {
+  if (isDoctor && !getActivePatientEmail()) {
     return (
       <section className="dashboard-section-panel parent-dashboard-page">
         <div className="dashboard-section-intro">
-          <span className="dashboard-section-label">{role} view</span>
+          <span className="dashboard-section-label">Provider view</span>
+          <h2 className="dashboard-section-title">No Patient Selected</h2>
+          <p className="dashboard-section-copy">
+            Please return to your patient list to select an active patient chart before creating clinical notes.
+          </p>
+        </div>
+        <div className="dashboard-section-card">
+          <Link className="btn btn-primary" to="/dashboard">Return to Patient List</Link>
+        </div>
+      </section>
+    )
+  }
+
+  if (role === 'admin') {
+    return (
+      <section className="dashboard-section-panel parent-dashboard-page">
+        <div className="dashboard-section-intro">
+          <span className="dashboard-section-label">Admin view</span>
           <h2 className="dashboard-section-title">Care Notes</h2>
           <p className="dashboard-section-copy">
             This note space is designed for parents to save daily observations and reminders.
           </p>
-        </div>
-
-        <div className="dashboard-section-card">
-          <p className="mb-3">Sign in with a parent account to add or update care notes.</p>
-          <p className="mb-0">Current account: {loggedInUser?.email || 'No email found'}</p>
         </div>
       </section>
     )
@@ -163,6 +180,7 @@ const NotesSection = () => {
 
   return (
     <section className="dashboard-section-panel parent-dashboard-page notes-page">
+      <ActivePatientBanner />
       <div className="dashboard-section-intro">
         <span className="dashboard-section-label">Care Notes</span>
         <h2 className="dashboard-section-title">Keep reminders and observations together</h2>
@@ -202,7 +220,7 @@ const NotesSection = () => {
 
       <div className="row g-4">
         <div className="col-xl-5">
-          <article className="notes-form-card h-100">
+          <article className="notes-form-card h-100" style={{ borderRight: '1px solid rgba(82,98,124,0.08)' }}>
             <span className="dashboard-section-card-label">
               {editingNoteId ? 'Update note' : 'Add note'}
             </span>

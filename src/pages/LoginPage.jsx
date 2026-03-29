@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../components/style/login.css'
-import { getRoleFromEmail, navigateTo, saveLoggedInUser } from '../utils/navigation'
+import { authenticateUser, getRoleFromEmail, navigateTo } from '../utils/navigation'
 
 const initialLoginForm = {
   email: '',
@@ -21,6 +21,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [signedInUser, setSignedInUser] = useState(null)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     if (!submitted) {
@@ -45,8 +46,15 @@ const LoginPage = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    const authUser = saveLoggedInUser(formData.email)
-    setSignedInUser(authUser)
+    const result = authenticateUser(formData.email, formData.password)
+
+    if (!result.success) {
+      setErrorMessage(result.message)
+      return
+    }
+
+    setSignedInUser(result.user)
+    setErrorMessage('')
     setSubmitted(true)
   }
 
@@ -88,7 +96,7 @@ const LoginPage = () => {
         <section className="login-hero">
           <div className="container">
             <div className="row g-4 align-items-center">
-              <div className="col-lg-5">
+              <div className="col-lg-5" style={{ overflow: 'hidden' }}>
                 <div className="login-copy">
                   <span className="login-kicker">One secure sign-in for every care role</span>
                   <h1>Sign in for parent, admin, or doctor access</h1>
@@ -136,6 +144,12 @@ const LoginPage = () => {
                           <p>Use your email and password to enter your BabyBloom workspace.</p>
                         </div>
 
+                        {errorMessage && !submitted && (
+                          <div className="alert alert-danger py-2" role="alert">
+                            {errorMessage}
+                          </div>
+                        )}
+
                         {submitted ? (
                           <div className="login-success" role="status">
                             <h3>Signed in successfully</h3>
@@ -164,12 +178,23 @@ const LoginPage = () => {
                                   onChange={handleChange}
                                   required
                                 />
-                                <small className="text-muted d-block mt-2">
-                                  Condition: emails starting with <strong>admin</strong> open the
-                                  admin dashboard, emails starting with <strong>doctor</strong> or{' '}
-                                  <strong>dr</strong> open the doctor dashboard, and all other
-                                  emails open the parent dashboard.
-                                </small>
+                                <div
+                                  className="mt-2 p-2 px-3 rounded-3 d-flex gap-2 align-items-start"
+                                  style={{
+                                    background: 'rgba(215,240,232,0.6)',
+                                    border: '1px solid rgba(70,113,101,0.2)',
+                                    fontSize: '0.85rem',
+                                    color: '#467165',
+                                  }}
+                                  role="note"
+                                >
+                                  <span style={{ marginTop: 1 }}>i</span>
+                                  <span>
+                                    <strong>admin@...</strong> {'->'} Admin dashboard.
+                                    <strong> Admin-added doctor email</strong> {'->'} Doctor
+                                    dashboard. All other emails {'->'} Parent dashboard.
+                                  </span>
+                                </div>
                               </div>
 
                               <div className="col-12">
@@ -215,8 +240,8 @@ const LoginPage = () => {
                             <div className="login-stat-card mt-4">
                               <strong>Detected role: {detectedRole}</strong>
                               <p className="mb-0">
-                                Try `admin@babybloom.com`, `doctor@babybloom.com`, or a normal
-                                parent email like `parent@email.com`.
+                                Doctor login works with the email and password set by admin in the
+                                doctor directory.
                               </p>
                             </div>
 

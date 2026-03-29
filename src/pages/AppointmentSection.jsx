@@ -4,7 +4,9 @@ import '../components/style/parentdashboard.css'
 import { getSavedBabyProfile } from '../utils/babyProfile'
 import { getLoggedInUser } from '../utils/navigation'
 import { getSavedAppointments, saveAppointment } from '../utils/appointments'
-import { doctors } from '../data/doctors'
+import { getAvailableDoctors } from '../utils/doctors'
+import { getEffectiveUserEmail, getActivePatientEmail } from '../utils/doctorNavigation'
+import ActivePatientBanner from '../components/ActivePatientBanner'
 
 const appointmentStages = [
   {
@@ -147,10 +149,73 @@ const getDayKey = (dateValue) => {
   return parsedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
 }
 
+const getSlotsForDoctorAndDate = (doctors, clinicName, appointmentDate) => {
+  if (!clinicName || !appointmentDate) {
+    return []
+  }
+
+  const selectedDoctor = doctors.find((doctor) => doctor.name === clinicName)
+  const selectedDayKey = getDayKey(appointmentDate)
+
+  return selectedDoctor && selectedDayKey ? selectedDoctor.slots?.[selectedDayKey] ?? [] : []
+}
+
+/** Convert a 24-h "HH:MM" string (from <input type="time">) to "h:mm AM/PM" for display */
+const formatTime24 = (value) => {
+  if (!value) return ''
+  // Already in AM/PM format
+  if (/AM|PM/i.test(value)) return value
+  const m = value.match(/^(\d{1,2}):(\d{2})$/)
+  if (!m) return value
+  const h = Number(m[1])
+  const min = m[2]
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour12 = h % 12 || 12
+  return `${hour12}:${min} ${period}`
+}
+
+const getAppointmentStatus = (appointmentDate, appointmentTime = '') => {
+  const apptDt = (() => {
+    if (!appointmentDate) return null
+    const base = new Date(`${appointmentDate}T00:00:00`)
+    if (Number.isNaN(base.getTime())) return null
+    if (appointmentTime) {
+      // Support both "HH:MM" (24h from input[type=time]) and "h:mm AM/PM"
+      const m24 = appointmentTime.match(/^(\d{1,2}):(\d{2})$/)
+      if (m24) {
+        base.setHours(Number(m24[1]), Number(m24[2]), 0, 0)
+      } else {
+        const m = appointmentTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
+        if (m) {
+          let h = Number(m[1]) % 12
+          if (m[3].toUpperCase() === 'PM') h += 12
+          base.setHours(h, Number(m[2]), 0, 0)
+        }
+      }
+    }
+    return base
+  })()
+
+  if (!apptDt) return { label: 'Unknown', color: '#888', bg: '#f3f4f6' }
+
+  const now = new Date()
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayEnd = new Date()
+  todayEnd.setHours(23, 59, 59, 999)
+
+  if (apptDt < todayStart) return { label: 'Past', color: '#6b7280', bg: '#f3f4f6' }
+  if (apptDt <= todayEnd) return { label: 'Today', color: '#b45309', bg: '#fef3c7' }
+  return { label: 'Upcoming', color: '#15803d', bg: '#dcfce7' }
+}
+
 const AppointmentSection = () => {
   const loggedInUser = getLoggedInUser()
   const role = loggedInUser?.role ?? 'parent'
-  const savedProfile = getSavedBabyProfile(loggedInUser?.email)
+  const isDoctor = role === 'doctor'
+  const effectiveEmail = getEffectiveUserEmail(loggedInUser)
+  const doctors = getAvailableDoctors()
+  const savedProfile = getSavedBabyProfile(effectiveEmail)
   const familyType = savedProfile?.familyType === 'twins' ? 'twins' : 'single'
   const babies = savedProfile?.babies ?? []
   const availableBabies = babies.filter((profile) => hasProfileData(profile))
@@ -172,6 +237,7 @@ const AppointmentSection = () => {
     visitType: nextAppointment.title,
   }))
   const [toastMessage, setToastMessage] = useState('')
+  const [pendingAppointment, setPendingAppointment] = useState(null)
   const [appointmentForm, setAppointmentForm] = useState(() => ({
     babyLabel: babyOptions[0]?.label ?? '',
     visitType: babyOptions[0]?.visitType ?? 'Routine checkup',
@@ -181,7 +247,7 @@ const AppointmentSection = () => {
     notes: '',
   }))
   const [savedAppointments, setSavedAppointments] = useState(() =>
-    getSavedAppointments(loggedInUser?.email)
+    getSavedAppointments(effectiveEmail)
   )
 
   useEffect(() => {
@@ -203,37 +269,11 @@ const AppointmentSection = () => {
     babyOptions.find((option) => option.label === appointmentForm.babyLabel) ?? babyOptions[0]
   const selectedDoctor = doctors.find((doctor) => doctor.name === appointmentForm.clinicName)
   const selectedDayKey = getDayKey(appointmentForm.appointmentDate)
-  const availableSlots =
-    selectedDoctor && selectedDayKey ? selectedDoctor.slots?.[selectedDayKey] ?? [] : []
-
-  useEffect(() => {
-    setAppointmentForm((current) => {
-      if (!current.appointmentDate || !current.clinicName) {
-        return current
-      }
-
-      const currentDoctor = doctors.find((doctor) => doctor.name === current.clinicName)
-      const currentDayKey = getDayKey(current.appointmentDate)
-      const nextSlots =
-        currentDoctor && currentDayKey ? currentDoctor.slots?.[currentDayKey] ?? [] : []
-
-      if (!nextSlots.length) {
-        return {
-          ...current,
-          appointmentTime: '',
-        }
-      }
-
-      if (nextSlots.includes(current.appointmentTime)) {
-        return current
-      }
-
-      return {
-        ...current,
-        appointmentTime: nextSlots[0],
-      }
-    })
-  }, [appointmentForm.appointmentDate, appointmentForm.clinicName])
+  const availableSlots = getSlotsForDoctorAndDate(
+    doctors,
+    appointmentForm.clinicName,
+    appointmentForm.appointmentDate
+  )
 
   const handleAppointmentChange = (event) => {
     const { name, value } = event.target
@@ -249,6 +289,14 @@ const AppointmentSection = () => {
         }
       }
 
+      // When date or doctor changes, update slot hints but don't override a manually-typed time
+      if (name === 'appointmentDate' || name === 'clinicName') {
+        return {
+          ...current,
+          [name]: value,
+        }
+      }
+
       return {
         ...current,
         [name]: value,
@@ -258,8 +306,8 @@ const AppointmentSection = () => {
 
   const handleBookAppointment = (event) => {
     event.preventDefault()
-
-    const nextAppointment = {
+    // Stage the appointment for in-page confirmation instead of window.confirm()
+    setPendingAppointment({
       id: `${Date.now()}`,
       babyLabel: appointmentForm.babyLabel,
       babyName: selectedBaby?.displayName ?? appointmentForm.babyLabel,
@@ -268,10 +316,14 @@ const AppointmentSection = () => {
       appointmentTime: appointmentForm.appointmentTime,
       clinicName: appointmentForm.clinicName,
       notes: appointmentForm.notes,
-    }
+    })
+  }
 
-    const nextSavedAppointments = saveAppointment(nextAppointment, loggedInUser?.email)
+  const handleConfirmAppointment = () => {
+    if (!pendingAppointment) return
+    const nextSavedAppointments = saveAppointment(pendingAppointment, effectiveEmail)
     setSavedAppointments(nextSavedAppointments)
+    setPendingAppointment(null)
     setAppointmentForm({
       babyLabel: babyOptions[0]?.label ?? '',
       visitType: babyOptions[0]?.visitType ?? 'Routine checkup',
@@ -283,7 +335,28 @@ const AppointmentSection = () => {
     setToastMessage('Appointment booked successfully.')
   }
 
-  if (role !== 'parent') {
+  const handleCancelPending = () => {
+    setPendingAppointment(null)
+  }
+
+  if (isDoctor && !getActivePatientEmail()) {
+    return (
+      <section className="dashboard-section-panel parent-dashboard-page">
+        <div className="dashboard-section-intro">
+          <span className="dashboard-section-label">Provider view</span>
+          <h2 className="dashboard-section-title">No Patient Selected</h2>
+          <p className="dashboard-section-copy">
+            Please return to your patient list to select an active patient chart before booking appointments.
+          </p>
+        </div>
+        <div className="dashboard-section-card">
+          <Link className="btn btn-primary" to="/dashboard">Return to Patient List</Link>
+        </div>
+      </section>
+    )
+  }
+
+  if (role === 'admin') {
     return (
       <section className="dashboard-section-panel parent-dashboard-page">
         <div className="dashboard-section-intro">
@@ -329,9 +402,39 @@ const AppointmentSection = () => {
 
   return (
     <section className="dashboard-section-panel parent-dashboard-page appointment-page">
+      <ActivePatientBanner />
+
+      {/* 3-day reminder banner */}
+      {savedAppointments.some((appt) => {
+        if (!appt.appointmentDate) return false
+        const apptDate = new Date(`${appt.appointmentDate}T00:00:00`)
+        if (Number.isNaN(apptDate.getTime())) return false
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const diffDays = Math.ceil((apptDate - today) / 86400000)
+        return diffDays >= 0 && diffDays <= 3
+      }) && (
+        <div
+          className="d-flex align-items-center gap-3 mb-4"
+          role="alert"
+          style={{
+            background: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
+            border: '1.5px solid #fcd34d',
+            borderRadius: '12px',
+            padding: '0.9rem 1.2rem',
+            color: '#78350f',
+          }}
+        >
+          <span style={{ fontSize: '1.3rem' }}>🔔</span>
+          <div>
+            <strong>Upcoming appointment reminder</strong> — You have an appointment within the next
+            3 days. Check your saved bookings below and prepare the required documents.
+          </div>
+        </div>
+      )}
       <div className="dashboard-section-intro">
         <span className="dashboard-section-label">Appointments</span>
-        <h2 className="dashboard-section-title">Appointment planner for your family</h2>
+        <h2 className="dashboard-section-title">Appointment planner for {isDoctor ? 'this' : 'your'} family</h2>
         <p className="dashboard-section-copy mb-0">
           Keep routine baby visits organized and prepare for each appointment with the right notes.
         </p>
@@ -402,164 +505,268 @@ const AppointmentSection = () => {
       <div className="row g-4 mb-4">
         <div className="col-xl-5">
           <article className="appointment-booking-card h-100">
-            <span className="dashboard-section-card-label">Book appointment</span>
-            <h3 className="appointment-booking-title">Schedule the next clinic visit</h3>
-            <p className="mb-4">
-              Parents can book appointments here and keep a quick record of upcoming visits.
-            </p>
+            {pendingAppointment ? (
+              /* ── In-page confirmation panel ── */
+              <>
+                <span className="dashboard-section-card-label">Confirm booking</span>
+                <h3 className="appointment-booking-title">Review before saving</h3>
+                <p className="mb-4">
+                  Check the details below and confirm to save this appointment.
+                </p>
 
-            <form onSubmit={handleBookAppointment}>
-              <div className="row g-3">
-                <div className="col-12">
-                  <label className="form-label" htmlFor="babyLabel">
-                    Select baby
-                  </label>
-                  <select
-                    className="form-select"
-                    id="babyLabel"
-                    name="babyLabel"
-                    value={appointmentForm.babyLabel}
-                    onChange={handleAppointmentChange}
-                    required
-                  >
-                    {babyOptions.map((option) => (
-                      <option key={option.label} value={option.label}>
-                        {option.displayName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label" htmlFor="visitType">
-                    Visit type
-                  </label>
-                  <select
-                    className="form-select"
-                    id="visitType"
-                    name="visitType"
-                    value={appointmentForm.visitType}
-                    onChange={handleAppointmentChange}
-                    required
-                  >
-                    {visitTypeOptions.map((visitType) => (
-                      <option key={visitType} value={visitType}>
-                        {visitType}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label" htmlFor="appointmentDate">
-                    Date
-                  </label>
-                  <input
-                    className="form-control"
-                    id="appointmentDate"
-                    name="appointmentDate"
-                    type="date"
-                    value={appointmentForm.appointmentDate}
-                    onChange={handleAppointmentChange}
-                    min={getTodayDate()}
-                    required
-                  />
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label" htmlFor="appointmentTime">
-                    Available slot
-                  </label>
-                  <select
-                    className="form-select"
-                    id="appointmentTime"
-                    name="appointmentTime"
-                    value={appointmentForm.appointmentTime}
-                    onChange={handleAppointmentChange}
-                    disabled={!availableSlots.length}
-                    required
-                  >
-                    <option value="">
-                      {availableSlots.length ? 'Select slot' : 'No slots for selected date'}
-                    </option>
-                    {availableSlots.map((slot) => (
-                      <option key={slot} value={slot}>
-                        {slot}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label" htmlFor="clinicName">
-                    Select doctor
-                  </label>
-                  <select
-                    className="form-select"
-                    id="clinicName"
-                    name="clinicName"
-                    value={appointmentForm.clinicName}
-                    onChange={handleAppointmentChange}
-                    required
-                  >
-                    {doctors.map((doctor) => (
-                      <option key={doctor.name} value={doctor.name}>
-                        {doctor.name} - {doctor.specialty}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-12">
-                  <article className="appointment-stage-card">
-                    <span className="dashboard-section-card-label">Slots available</span>
-                    <h4>
-                      {selectedDoctor
-                        ? `${selectedDoctor.name} on ${
-                            selectedDayKey
-                              ? selectedDayKey.charAt(0).toUpperCase() + selectedDayKey.slice(1)
-                              : 'selected day'
-                          }`
-                        : 'Choose a doctor'}
-                    </h4>
-                    {availableSlots.length ? (
-                      <div className="appointment-checklist">
-                        {availableSlots.map((slot) => (
-                          <span className="appointment-slot-chip" key={slot}>
-                            {slot}
-                          </span>
-                        ))}
+                <div
+                  style={{
+                    background: 'rgba(215,240,232,0.45)',
+                    border: '1px solid rgba(70,113,101,0.2)',
+                    borderRadius: 14,
+                    padding: '18px 20px',
+                    marginBottom: 20,
+                  }}
+                >
+                  {[
+                    { label: 'Baby', value: pendingAppointment.babyName },
+                    { label: 'Visit type', value: pendingAppointment.visitType },
+                    { label: 'Doctor', value: pendingAppointment.clinicName },
+                    { label: 'Date', value: pendingAppointment.appointmentDate },
+                    { label: 'Time', value: formatTime24(pendingAppointment.appointmentTime) || '—' },
+                    pendingAppointment.notes && { label: 'Notes', value: pendingAppointment.notes },
+                  ]
+                    .filter(Boolean)
+                    .map(({ label, value }) => (
+                      <div
+                        key={label}
+                        style={{
+                          display: 'flex',
+                          gap: 12,
+                          padding: '6px 0',
+                          borderBottom: '1px solid rgba(70,113,101,0.1)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            minWidth: 90,
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                            color: '#467165',
+                            paddingTop: 2,
+                          }}
+                        >
+                          {label}
+                        </span>
+                        <span style={{ color: 'var(--text)', fontWeight: 500 }}>{value}</span>
                       </div>
-                    ) : (
-                      <p className="mb-0">
-                        No available slots for this doctor on the selected date. Try another day.
-                      </p>
-                    )}
-                  </article>
+                    ))}
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label" htmlFor="notes">
-                    Notes
-                  </label>
-                  <textarea
-                    className="form-control"
-                    id="notes"
-                    name="notes"
-                    rows="3"
-                    value={appointmentForm.notes}
-                    onChange={handleAppointmentChange}
-                    placeholder="Add symptoms, questions, or reminders"
-                  />
-                </div>
-
-                <div className="col-12">
-                  <button className="btn btn-primary" type="submit">
-                    Book Appointment
+                <div className="d-flex gap-3">
+                  <button
+                    className="btn btn-primary"
+                    type="button"
+                    id="confirm-appointment-btn"
+                    onClick={handleConfirmAppointment}
+                  >
+                    ✓ Confirm &amp; Save
+                  </button>
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={handleCancelPending}
+                  >
+                    ← Go Back
                   </button>
                 </div>
-              </div>
-            </form>
+              </>
+            ) : (
+              /* ── Normal booking form ── */
+              <>
+                <span className="dashboard-section-card-label">Book appointment</span>
+                <h3 className="appointment-booking-title">Schedule the next clinic visit</h3>
+                <p className="mb-4">
+                  Parents can book appointments here and keep a quick record of upcoming visits.
+                </p>
+
+                <form onSubmit={handleBookAppointment}>
+                  <div className="row g-3">
+                    <div className="col-12">
+                      <label className="form-label" htmlFor="babyLabel">
+                        Select baby
+                      </label>
+                      <select
+                        className="form-select"
+                        id="babyLabel"
+                        name="babyLabel"
+                        value={appointmentForm.babyLabel}
+                        onChange={handleAppointmentChange}
+                        required
+                      >
+                        {babyOptions.map((option) => (
+                          <option key={option.label} value={option.label}>
+                            {option.displayName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label" htmlFor="visitType">
+                        Visit type
+                      </label>
+                      <select
+                        className="form-select"
+                        id="visitType"
+                        name="visitType"
+                        value={appointmentForm.visitType}
+                        onChange={handleAppointmentChange}
+                        required
+                      >
+                        {visitTypeOptions.map((visitType) => (
+                          <option key={visitType} value={visitType}>
+                            {visitType}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label" htmlFor="appointmentDate">
+                        Date
+                      </label>
+                      <input
+                        className="form-control"
+                        id="appointmentDate"
+                        name="appointmentDate"
+                        type="date"
+                        value={appointmentForm.appointmentDate}
+                        onChange={handleAppointmentChange}
+                        min={getTodayDate()}
+                        required
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label" htmlFor="appointmentTime">
+                        Preferred time
+                      </label>
+                      <input
+                        className="form-control"
+                        id="appointmentTime"
+                        name="appointmentTime"
+                        type="time"
+                        value={appointmentForm.appointmentTime}
+                        onChange={handleAppointmentChange}
+                        required
+                      />
+                      {availableSlots.length > 0 && (
+                        <div className="mt-2 d-flex flex-wrap gap-1">
+                          {availableSlots.map((slot) => {
+                            // Convert "09:00 AM" → "09:00" for the time input
+                            const toTime24 = (s) => {
+                              const m = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
+                              if (!m) return ''
+                              let h = Number(m[1]) % 12
+                              if (m[3].toUpperCase() === 'PM') h += 12
+                              return `${String(h).padStart(2, '0')}:${m[2]}`
+                            }
+                            return (
+                              <button
+                                key={slot}
+                                type="button"
+                                className="appointment-slot-chip"
+                                style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
+                                onClick={() =>
+                                  setAppointmentForm((prev) => ({
+                                    ...prev,
+                                    appointmentTime: toTime24(slot),
+                                  }))
+                                }
+                              >
+                                {slot}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                      {appointmentForm.appointmentDate && availableSlots.length === 0 && (
+                        <p className="form-text text-muted mt-1 mb-0">
+                          No preset slots for this day — enter any preferred time above.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label" htmlFor="clinicName">
+                        Select doctor
+                      </label>
+                      <select
+                        className="form-select"
+                        id="clinicName"
+                        name="clinicName"
+                        value={appointmentForm.clinicName}
+                        onChange={handleAppointmentChange}
+                        required
+                      >
+                        {doctors.map((doctor) => (
+                          <option key={doctor.name} value={doctor.name}>
+                            {doctor.name} - {doctor.specialty}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-12">
+                      <article className="appointment-stage-card">
+                        <span className="dashboard-section-card-label">Slots available</span>
+                        <h4>
+                          {selectedDoctor
+                            ? `${selectedDoctor.name} on ${
+                                selectedDayKey
+                                  ? selectedDayKey.charAt(0).toUpperCase() + selectedDayKey.slice(1)
+                                  : 'selected day'
+                              }`
+                            : 'Choose a doctor'}
+                        </h4>
+                        {availableSlots.length ? (
+                          <div className="appointment-checklist">
+                            {availableSlots.map((slot) => (
+                              <span className="appointment-slot-chip" key={slot}>
+                                {slot}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mb-0">
+                            No available slots for this doctor on the selected date. Try another day.
+                          </p>
+                        )}
+                      </article>
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label" htmlFor="notes">
+                        Notes
+                      </label>
+                      <textarea
+                        className="form-control"
+                        id="notes"
+                        name="notes"
+                        rows="3"
+                        value={appointmentForm.notes}
+                        onChange={handleAppointmentChange}
+                        placeholder="Add symptoms, questions, or reminders"
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <button className="btn btn-primary" type="submit" id="book-appointment-btn">
+                        Book Appointment
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </>
+            )}
           </article>
         </div>
 
@@ -577,27 +784,46 @@ const AppointmentSection = () => {
 
             {savedAppointments.length ? (
               <div className="appointment-booking-list">
-                {savedAppointments.map((appointment) => (
-                  <article className="appointment-saved-card" key={appointment.id}>
-                    <div className="appointment-saved-header">
-                      <div>
-                        <span className="dashboard-section-card-label">
-                          {appointment.babyLabel}
-                        </span>
-                        <h4>{appointment.babyName}</h4>
+                {savedAppointments.map((appointment) => {
+                  const status = getAppointmentStatus(appointment.appointmentDate, appointment.appointmentTime)
+                  return (
+                    <article className="appointment-saved-card" key={appointment.id}>
+                      <div className="appointment-saved-header">
+                        <div>
+                          <span className="dashboard-section-card-label">
+                            {appointment.babyLabel}
+                          </span>
+                          <h4>{appointment.babyName}</h4>
+                        </div>
+                        <div className="d-flex flex-wrap gap-2 align-items-center">
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '6px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              background: status.bg,
+                              color: status.color,
+                              letterSpacing: '0.03em',
+                            }}
+                          >
+                            {status.label}
+                          </span>
+                          <span className="appointment-chip">{appointment.visitType}</span>
+                        </div>
                       </div>
-                      <span className="appointment-chip">{appointment.visitType}</span>
-                    </div>
 
-                    <div className="appointment-saved-meta">
-                      <span>Date: {appointment.appointmentDate}</span>
-                      <span>Time: {appointment.appointmentTime}</span>
-                      <span>Clinic: {appointment.clinicName}</span>
-                    </div>
+                      <div className="appointment-saved-meta">
+                        <span>Date: {appointment.appointmentDate}</span>
+                        <span>Time: {formatTime24(appointment.appointmentTime)}</span>
+                        <span>Clinic: {appointment.clinicName}</span>
+                      </div>
 
-                    {appointment.notes && <p className="mb-0">{appointment.notes}</p>}
-                  </article>
-                ))}
+                      {appointment.notes && <p className="mb-0">{appointment.notes}</p>}
+                    </article>
+                  )
+                })}
               </div>
             ) : (
               <div className="dashboard-profile-empty-state">

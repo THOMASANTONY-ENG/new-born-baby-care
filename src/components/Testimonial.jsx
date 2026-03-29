@@ -2,50 +2,10 @@ import React from 'react'
 import { Card, Carousel, Col, Container, Row } from 'react-bootstrap'
 import { FaStar } from 'react-icons/fa'
 import './style/index.css'
+import { getPublicFeedbackEntries } from '../utils/feedback'
 
 const Testimonial = () => {
-  const testimonials = [
-    {
-      name: "sarah johnson",
-      feedback: "this platform helped me keep track my babies vaccination schedule easily . Highly recommend for new parents!",
-      rating: 5
-      },
-    {
-      name: "Emily Brown",
-      feedback: " the pediatrician Consultation feature is  amazing. I got quick advice for my baby's health concerns.",
-      rating: 5
-    },
-    {
-      name: "Michael Davis",
-      feedback: "the growth tracking feature is fantastic. I can monitor my baby's development and milestones effortlessly.",
-      rating: 4
-    },
-    {
-      name: "Olivia Wilson",
-      feedback: "The feeding log makes daily routines much easier to manage. I can quickly check when my baby last ate.",
-      rating: 5
-    },
-    {
-      name: "James Taylor",
-      feedback: "I like how simple the app is to use. Tracking sleep patterns has helped us understand our baby's schedule better.",
-      rating: 4
-    },
-    {
-      name: "Sophia Martinez",
-      feedback: "The milestone updates are very helpful and reassuring. It feels good to keep everything organized in one place.",
-      rating: 5
-    },
-    {
-      name: "Daniel Anderson",
-      feedback: "The reminders are useful and keep us from missing important checkups and vaccinations.",
-      rating: 4
-    },
-    {
-      name: "Ava Thomas",
-      feedback: "This app saves me time every day. I can track health notes, feeding, and growth without any confusion.",
-      rating: 5
-    }
-  ]
+  const testimonials = getPublicFeedbackEntries()
 
   const createGroups = (items, size) => {
     const groups = []
@@ -72,7 +32,7 @@ const Testimonial = () => {
         <Carousel.Item key={slideIndex}>
           <Row className="g-4 justify-content-center align-items-stretch mx-0">
             {group.map((item) => (
-              <Col key={item.name} {...columnProps} className="d-flex">
+              <Col key={item.id} {...columnProps} className="d-flex">
                 <Card className="testimonial-card h-100">
                   <Card.Body className="d-flex flex-column">
                     <div className="testimonial-rating mb-3">

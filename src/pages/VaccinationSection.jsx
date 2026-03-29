@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import '../components/style/parentdashboard.css'
 import { getSavedBabyProfile } from '../utils/babyProfile'
 import { getLoggedInUser } from '../utils/navigation'
+import { getEffectiveUserEmail, getActivePatientEmail } from '../utils/doctorNavigation'
+import ActivePatientBanner from '../components/ActivePatientBanner'
 
 const vaccineMilestones = [
   {
@@ -354,12 +356,38 @@ const statusLabelMap = {
   planned: 'Needs DOB',
 }
 
+const DONE_KEY = 'babyBloomDoneVaccines'
+
+const readDoneVaccines = (email) => {
+  try {
+    const raw = window.localStorage.getItem(`${DONE_KEY}-${email}`)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+const saveDoneVaccines = (email, map) => {
+  window.localStorage.setItem(`${DONE_KEY}-${email}`, JSON.stringify(map))
+}
+
 const VaccinationSection = () => {
   const loggedInUser = getLoggedInUser()
   const role = loggedInUser?.role ?? 'parent'
-  const savedProfile = getSavedBabyProfile(loggedInUser?.email)
+  const effectiveEmail = getEffectiveUserEmail(loggedInUser)
+  const isDoctor = role === 'doctor'
+  const savedProfile = getSavedBabyProfile(effectiveEmail)
   const familyType = savedProfile?.familyType === 'twins' ? 'twins' : 'single'
   const babies = savedProfile?.babies ?? []
+  const [doneVaccines, setDoneVaccines] = useState(() => readDoneVaccines(effectiveEmail))
+
+  const toggleDone = (key) => {
+    setDoneVaccines((prev) => {
+      const next = { ...prev, [key]: !prev[key] }
+      saveDoneVaccines(effectiveEmail, next)
+      return next
+    })
+  }
   const availableBabies = babies
     .map((profile, index) => ({
       profile,
@@ -367,7 +395,24 @@ const VaccinationSection = () => {
     }))
     .filter(({ profile }) => hasProfileData(profile))
 
-  if (role !== 'parent') {
+  if (isDoctor && !getActivePatientEmail()) {
+    return (
+      <section className="dashboard-section-panel parent-dashboard-page">
+        <div className="dashboard-section-intro">
+          <span className="dashboard-section-label">Provider view</span>
+          <h2 className="dashboard-section-title">No Patient Selected</h2>
+          <p className="dashboard-section-copy">
+            Please return to your patient list to select an active patient chart before updating vaccination records.
+          </p>
+        </div>
+        <div className="dashboard-section-card">
+          <Link className="btn btn-primary" to="/dashboard">Return to Patient List</Link>
+        </div>
+      </section>
+    )
+  }
+
+  if (role === 'admin') {
     return (
       <section className="dashboard-section-panel parent-dashboard-page">
         <div className="dashboard-section-intro">
@@ -450,9 +495,10 @@ const VaccinationSection = () => {
 
   return (
     <section className="dashboard-section-panel parent-dashboard-page vaccination-page">
+      <ActivePatientBanner />
       <div className="dashboard-section-intro">
         <span className="dashboard-section-label">Vaccination</span>
-        <h2 className="dashboard-section-title">Vaccination schedule for your family</h2>
+        <h2 className="dashboard-section-title">Vaccination schedule for {isDoctor ? 'this' : 'your'} family</h2>
         <p className="dashboard-section-copy mb-0">
           Review the next immunization milestone for your{' '}
           {familyType === 'twins' ? 'twins' : 'baby'} and keep doctor visits organized.
@@ -541,20 +587,56 @@ const VaccinationSection = () => {
                         </span>
                       </div>
                       <div className="vaccination-stage-list">
-                        {stage.vaccines.map((vaccine) => (
-                          <article
-                            className="vaccination-vaccine-item"
-                            key={`${stage.ageLabel}-${vaccine.name}`}
-                          >
-                            <strong>{vaccine.name}</strong>
-                            <p className="mb-2">{vaccine.timing}</p>
-                            <div className="vaccination-vaccine-meta">
-                              <span>Dose: {vaccine.dose}</span>
-                              <span>Route: {vaccine.route}</span>
-                              <span>Site: {vaccine.site}</span>
-                            </div>
-                          </article>
-                        ))}
+                        {stage.vaccines.map((vaccine) => {
+                            const doneKey = `${label}-${stage.ageLabel}-${vaccine.name}`
+                            const isDone = Boolean(doneVaccines[doneKey])
+                            return (
+                              <article
+                                className="vaccination-vaccine-item"
+                                key={`${stage.ageLabel}-${vaccine.name}`}
+                                style={isDone ? { opacity: 0.72 } : undefined}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4 }}>
+                                  <input
+                                    type="checkbox"
+                                    id={doneKey}
+                                    checked={isDone}
+                                    onChange={() => toggleDone(doneKey)}
+                                    style={{ marginTop: 3, accentColor: '#467165', cursor: 'pointer', flexShrink: 0 }}
+                                    aria-label={`Mark ${vaccine.name} as done`}
+                                  />
+                                  <label htmlFor={doneKey} style={{ cursor: 'pointer', flex: 1 }}>
+                                    <strong style={isDone ? { textDecoration: 'line-through', color: 'var(--text-soft)' } : undefined}>
+                                      {vaccine.name}
+                                    </strong>
+                                    {isDone && (
+                                      <span
+                                        style={{
+                                          marginLeft: 8,
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          padding: '2px 8px',
+                                          borderRadius: 999,
+                                          background: 'rgba(223, 244, 239, 0.95)',
+                                          color: '#467165',
+                                          fontSize: '0.75rem',
+                                          fontWeight: 700,
+                                        }}
+                                      >
+                                        Done ✓
+                                      </span>
+                                    )}
+                                  </label>
+                                </div>
+                                <p className="mb-2" style={{ paddingLeft: 26 }}>{vaccine.timing}</p>
+                                <div className="vaccination-vaccine-meta" style={{ paddingLeft: 26 }}>
+                                  <span>Dose: {vaccine.dose}</span>
+                                  <span>Route: {vaccine.route}</span>
+                                  <span>Site: {vaccine.site}</span>
+                                </div>
+                              </article>
+                            )
+                          })}
                       </div>
                     </article>
                   )

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import '../components/style/register.css'
 import { navigateTo, saveLoggedInUser } from '../utils/navigation'
+import { userEmailExists, saveUser } from '../utils/users'
 
 const initialForm = {
   fullName: '',
@@ -23,6 +24,7 @@ const supportHighlights = [
 const RegisterPage = () => {
   const [formData, setFormData] = useState(initialForm)
   const [submitted, setSubmitted] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     if (!submitted) {
@@ -52,7 +54,20 @@ const RegisterPage = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault()
+    
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMessage('Passwords do not match.')
+      return
+    }
+
+    if (userEmailExists(formData.email)) {
+      setErrorMessage('An account with this email already exists.')
+      return
+    }
+
+    saveUser(formData.email, formData.password)
     saveLoggedInUser(formData.email)
+    setErrorMessage('')
     setSubmitted(true)
   }
 
@@ -130,6 +145,12 @@ const RegisterPage = () => {
                           <h2>Parent registration</h2>
                           <p>Fill in your details to create a secure account.</p>
                         </div>
+
+                        {errorMessage && !submitted && (
+                          <div className="alert alert-danger py-2" role="alert">
+                            {errorMessage}
+                          </div>
+                        )}
 
                         {submitted ? (
                           <div className="register-success" role="status">

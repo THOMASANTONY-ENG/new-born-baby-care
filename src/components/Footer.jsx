@@ -1,6 +1,12 @@
 import React from 'react'
+import { getLoggedInUser, navigateTo } from '../utils/navigation'
 
 const Footer = () => {
+  const handleBookConsultation = (event) => {
+    event.preventDefault()
+    const user = getLoggedInUser()
+    navigateTo(user ? '/dashboard/appointment' : '/register')
+  }
   return (
     <footer className="site-footer" id="footer">
       <div className="container">
@@ -42,7 +48,7 @@ const Footer = () => {
             <h5>Contact</h5>
             <p className="footer-contact">support@babybloom.com</p>
             <p className="footer-contact">Mon to Sat, 9:00 AM to 7:00 PM</p>
-            <a className="footer-pill" href="#pediatricians">Book a consultation</a>
+            <a className="footer-pill" href="#" onClick={handleBookConsultation}>Book a consultation</a>
           </div>
         </div>
 

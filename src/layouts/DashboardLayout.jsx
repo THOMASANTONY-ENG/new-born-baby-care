@@ -5,12 +5,23 @@ import '../components/style/dashboardlayout.css'
 import { getLoggedInUser, logoutLoggedInUser } from '../utils/navigation'
 
 const pageTitles = {
-  '/dashboard': 'Care Overview',
+  '/dashboard': {
+    parent: 'Care Overview',
+    admin: 'Admin Overview',
+    doctor: 'Doctor Overview',
+  },
   '/dashboard/profile': 'Baby Profile',
   '/dashboard/vaccination': 'Vaccination Schedule',
   '/dashboard/appointment': 'Appointments',
   '/dashboard/growth': 'Growth Tracking',
   '/dashboard/notes': 'Care Notes',
+  '/dashboard/feedback': 'Parent Feedback',
+  '/dashboard/resources': 'Educational Resources',
+  '/dashboard/doctor-profile': 'My Profile',
+  '/dashboard/admin/users': 'Family Accounts',
+  '/dashboard/admin/doctors': 'Pediatrician Management',
+  '/dashboard/admin/resources': 'Resource Management',
+  '/dashboard/admin/feedback': 'Feedback and Contact Inbox',
 }
 
 const roleLabels = {
@@ -27,7 +38,7 @@ const DashboardLayout = () => {
 
   const handleLogout = () => {
     logoutLoggedInUser()
-    navigate('/login')
+    window.location.replace('/login')
   }
 
   return (
@@ -37,18 +48,32 @@ const DashboardLayout = () => {
       <div className="dashboard-main">
         <header className="dashboard-topbar">
           <div>
-            <span className="dashboard-topbar-label">{roleLabels[role]} Dashboard</span>
             <h1 className="dashboard-topbar-title mb-1">
-              {pageTitles[location.pathname] ?? 'BabyBloom Dashboard'}
+              {typeof pageTitles[location.pathname] === 'object'
+                ? pageTitles[location.pathname][role] ?? 'BabyBloom Dashboard'
+                : pageTitles[location.pathname] ?? 'BabyBloom Dashboard'}
             </h1>
             <p className="dashboard-topbar-copy mb-0">
               Signed in as {loggedInUser?.email || 'guest'}.
             </p>
           </div>
 
-          <button className="btn btn-outline-primary btn-sm" onClick={handleLogout}>
-            Log out
-          </button>
+          <div className="d-flex gap-2">
+            <button
+              className="topbar-action-btn topbar-btn-home"
+              onClick={() => navigate('/')}
+              title="Back to Home"
+            >
+              ← Home
+            </button>
+            <button
+              className="topbar-action-btn topbar-btn-logout"
+              onClick={handleLogout}
+              title="Log out"
+            >
+              Log out
+            </button>
+          </div>
         </header>
 
         <div className="dashboard-page-shell">

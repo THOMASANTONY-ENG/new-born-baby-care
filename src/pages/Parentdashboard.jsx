@@ -4,6 +4,7 @@ import '../components/style/parentdashboard.css'
 import { getSavedAppointments } from '../utils/appointments'
 import { getLoggedInUser } from '../utils/navigation'
 import { getSavedBabyProfile, saveBabyProfile } from '../utils/babyProfile'
+import { getSharedResources } from '../utils/sharedResources'
 import { getSavedCareNotes } from '../utils/careNotes'
 import { getSavedGrowthLogs } from '../utils/growthLogs'
 
@@ -208,6 +209,8 @@ const ParentDashboard = () => {
     !savedProfile.babies.some((profile) => hasProfileData(profile))
   )
   const [toastMessage, setToastMessage] = useState('')
+  const [profileErrors, setProfileErrors] = useState({})
+  const [sharedResources] = useState(() => getSharedResources(loggedInUser?.email))
 
   useEffect(() => {
     if (!toastMessage) {
@@ -263,16 +266,42 @@ const ParentDashboard = () => {
         profileIndex === index ? { ...profile, [name]: value } : profile
       ),
     }))
+
+    const errorKey = `${index}-${name}`
+    setProfileErrors((current) => {
+      if (!current[errorKey]) {
+        return current
+      }
+
+      const nextErrors = { ...current }
+      delete nextErrors[errorKey]
+      return nextErrors
+    })
   }
 
   const handleSubmit = (event) => {
     event.preventDefault()
+    const nextErrors = {}
+
+    profileDraft.babies.forEach((profile, index) => {
+      if (!profile.dob) {
+        nextErrors[`${index}-dob`] = 'Date of birth is required before saving the baby profile.'
+      }
+    })
+
+    if (Object.keys(nextErrors).length > 0) {
+      setProfileErrors(nextErrors)
+      setToastMessage('Add date of birth for each baby before saving the profile.')
+      return
+    }
+
     const nextSavedProfile = normalizeFamilyProfile(profileDraft)
     saveBabyProfile(nextSavedProfile, loggedInUser?.email)
     setSavedProfile(nextSavedProfile)
     setProfileDraft(nextSavedProfile)
     setHiddenTwinDraft(normalizeBabyProfile(nextSavedProfile.babies[1] ?? emptyBabyProfile))
     setIsEditing(false)
+    setProfileErrors({})
     setToastMessage(
       nextSavedProfile.familyType === 'twins'
         ? 'Twin baby profiles saved successfully.'
@@ -555,8 +584,55 @@ const ParentDashboard = () => {
                           </Link>
                         </article>
                       </div>
+
+                      <div className="col-sm-6 col-xl-3">
+                        <article className="dashboard-care-status-card h-100">
+                          <span className="dashboard-section-card-label">Parent feedback</span>
+                          <h3 className="h6 mt-2 mb-2">Share your experience</h3>
+                          <p className="mb-0">
+                            Leave feedback about what feels helpful, confusing, or still missing for your family.
+                          </p>
+                          <Link
+                            className="btn btn-outline-primary btn-sm mt-3 align-self-start"
+                            to="/dashboard/feedback"
+                            aria-label="Open parent feedback page to submit your review"
+                          >
+                            Open Feedback
+                          </Link>
+                        </article>
+                      </div>
                     </div>
                   </section>
+
+                  {isParentView && sharedResources.length > 0 && (
+                    <section className="mb-5 dashboard-section-panel border-primary" style={{ borderWidth: '2px', borderStyle: 'solid', borderRadius: '8px', padding: '1.5rem' }} aria-labelledby="prescriptions-heading">
+                      <div className="d-flex flex-wrap justify-content-between gap-3 align-items-start mb-3">
+                        <div>
+                          <span className="dashboard-section-card-label text-primary">Provider Prescriptions</span>
+                          <h2 className="h5 mt-2 mb-1" id="prescriptions-heading">
+                            Educational packets from your doctor
+                          </h2>
+                          <p className="mb-0 text-muted">
+                            Your healthcare provider assigned the following reading materials for your family.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="row g-3">
+                        {sharedResources.map((res) => (
+                          <div className="col-md-6" key={res.id}>
+                            <article className="dashboard-care-status-card h-100 border border-primary">
+                              <span className="dashboard-section-card-label">Shared on {new Date(res.sharedAt).toLocaleDateString()}</span>
+                              <h3 className="h6 mt-2 mb-2">{res.title}</h3>
+                              <p className="mb-0 text-muted small">{res.description}</p>
+                              <a href={res.link} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm mt-3 align-self-start">
+                                Read More
+                              </a>
+                            </article>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
 
                   {(isEditing || !hasSavedProfile) ? (
                     <form id="profile-editor" onSubmit={handleSubmit}>
@@ -627,13 +703,18 @@ const ParentDashboard = () => {
                                     Date of birth
                                   </label>
                                   <input
-                                    className="form-control"
+                                    className={`form-control${profileErrors[`${index}-dob`] ? ' is-invalid' : ''}`}
                                     id={`dob-${index}`}
                                     name="dob"
                                     type="date"
                                     value={profile.dob}
                                     onChange={(event) => handleChange(index, event)}
                                   />
+                                  {profileErrors[`${index}-dob`] && (
+                                    <div className="invalid-feedback d-block">
+                                      {profileErrors[`${index}-dob`]}
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="col-md-6">

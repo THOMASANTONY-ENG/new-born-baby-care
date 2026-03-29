@@ -1,19 +1,46 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import '../components/style/parentdashboard.css'
 import { getSavedBabyProfile } from '../utils/babyProfile'
 import { getLoggedInUser } from '../utils/navigation'
+import { getEffectiveUserEmail, getActivePatientEmail } from '../utils/doctorNavigation'
+import ActivePatientBanner from '../components/ActivePatientBanner'
 
 const hasProfileData = (profile = {}) => Object.values(profile).some(Boolean)
 const getBabyLabel = (familyType, index) =>
   familyType === 'twins' ? `Twin ${index === 0 ? 'A' : 'B'}` : 'Baby'
 
 const ViewBabyProfile = () => {
+  const location = useLocation()
   const loggedInUser = getLoggedInUser()
-  const savedProfile = getSavedBabyProfile(loggedInUser?.email)
+  const role = loggedInUser?.role ?? 'parent'
+  const isDoctor = role === 'doctor'
+  const isAdmin = role === 'admin'
+  const selectedEmail =
+    isAdmin ? new URLSearchParams(location.search).get('email')?.trim().toLowerCase() ?? '' : ''
+  const effectiveEmail = selectedEmail || getEffectiveUserEmail(loggedInUser)
+  const savedProfile = getSavedBabyProfile(effectiveEmail)
   const familyType = savedProfile?.familyType === 'twins' ? 'twins' : 'single'
   const profiles = savedProfile?.babies ?? []
   const hasSavedProfiles = profiles.some((profile) => hasProfileData(profile))
+
+  if (isDoctor && !getActivePatientEmail()) {
+    return (
+      <section className="dashboard-section-panel parent-dashboard-page">
+        <div className="dashboard-section-intro">
+          <span className="dashboard-section-label">Provider view</span>
+          <h2 className="dashboard-section-title">No Patient Selected</h2>
+          <p className="dashboard-section-copy">
+            Please return to your patient list to select an active patient chart before viewing profile records.
+          </p>
+        </div>
+        <div className="dashboard-section-card">
+          <Link className="btn btn-primary" to="/dashboard">Return to Patient List</Link>
+        </div>
+      </section>
+    )
+  }
 
   if (!hasSavedProfiles) {
     return (
@@ -41,19 +68,20 @@ const ViewBabyProfile = () => {
 
   return (
     <section className="dashboard-section-panel parent-dashboard-page">
+      <ActivePatientBanner />
       <div className="dashboard-section-intro d-flex flex-wrap justify-content-between gap-3 align-items-start">
         <div>
           <span className="dashboard-section-label">Baby profile</span>
           <h2 className="dashboard-section-title">
-            Saved details for your {familyType === 'twins' ? 'twins' : 'baby'}
+            Saved details for {isDoctor || isAdmin ? 'this' : 'your'} {familyType === 'twins' ? 'twins' : 'baby'}
           </h2>
           <p className="mb-0">
-            Review the saved profile linked to <strong>{loggedInUser?.email}</strong>.
+            Review the saved profile linked to <strong>{effectiveEmail}</strong>.
           </p>
         </div>
 
         <Link className="btn btn-outline-primary" to="/dashboard">
-          Edit Profile
+          {isAdmin ? 'Back to Accounts' : 'Edit Profile'}
         </Link>
       </div>
 
