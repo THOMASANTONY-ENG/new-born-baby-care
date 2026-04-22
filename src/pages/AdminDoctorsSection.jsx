@@ -35,8 +35,20 @@ const AdminDoctorsSection = () => {
   const [errorMessage, setErrorMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [profileFilter, setProfileFilter] = useState('all')
-  const [currentSlotDay, setCurrentSlotDay] = useState('monday')
   const [currentSlotTime, setCurrentSlotTime] = useState('')
+  const DAYS_OF_WEEK = [
+    { id: 'monday', label: 'Mon' },
+    { id: 'tuesday', label: 'Tue' },
+    { id: 'wednesday', label: 'Wed' },
+    { id: 'thursday', label: 'Thu' },
+    { id: 'friday', label: 'Fri' },
+    { id: 'saturday', label: 'Sat' },
+    { id: 'sunday', label: 'Sun' },
+  ]
+  const [selectedDays, setSelectedDays] = useState(['monday'])
+  const [timeInputMode, setTimeInputMode] = useState('single') // 'single' or 'range'
+  const [rangeStart, setRangeStart] = useState('09:00')
+  const [rangeEnd, setRangeEnd] = useState('17:00')
   const allDoctors = getAvailableDoctors()
   const filteredDoctors = allDoctors.filter((doctor) => {
     const matchesSearch =
@@ -149,6 +161,22 @@ const AdminDoctorsSection = () => {
     setErrorMessage('')
   }
 
+  const handleToggleDay = (dayId) => {
+    setSelectedDays((prev) =>
+      prev.includes(dayId)
+        ? prev.length > 1
+          ? prev.filter((d) => d !== dayId)
+          : prev
+        : [...prev, dayId]
+    )
+  }
+
+  const handleSelectPreset = (preset) => {
+    if (preset === 'all') setSelectedDays(DAYS_OF_WEEK.map((d) => d.id))
+    else if (preset === 'weekdays') setSelectedDays(DAYS_OF_WEEK.slice(0, 5).map((d) => d.id))
+    else if (preset === 'weekend') setSelectedDays(DAYS_OF_WEEK.slice(5).map((d) => d.id))
+  }
+
   const handleAddSlot = () => {
     if (!currentSlotTime) {
       setErrorMessage('Please select a time to add a slot.')
@@ -164,18 +192,21 @@ const AdminDoctorsSection = () => {
     }
 
     const formattedTime = formatTime12(currentSlotTime)
-    const daySlots = doctorForm.slots[currentSlotDay] || []
+    const duplicateDays = selectedDays.filter((day) =>
+      (doctorForm.slots[day] || []).includes(formattedTime)
+    )
 
-    if (daySlots.includes(formattedTime)) {
-      setErrorMessage('This time slot already exists for the selected day.')
+    if (duplicateDays.length > 0) {
+      setErrorMessage(`This time slot already exists for: ${duplicateDays.join(', ')}`)
       return
     }
 
-    setDoctorForm((current) => ({
-      ...current,
-      slots: {
-        ...current.slots,
-        [currentSlotDay]: [...daySlots, formattedTime].sort((a, b) => {
+    setDoctorForm((current) => {
+      const nextSlots = { ...current.slots }
+
+      selectedDays.forEach((day) => {
+        const daySlots = nextSlots[day] || []
+        nextSlots[day] = [...daySlots, formattedTime].sort((a, b) => {
           const parse = (s) => {
             const [time, period] = s.split(' ')
             let [hh, mm] = time.split(':').map(Number)
@@ -184,11 +215,86 @@ const AdminDoctorsSection = () => {
             return hh * 60 + mm
           }
           return parse(a) - parse(b)
-        }),
-      },
-    }))
+        })
+      })
+
+      return {
+        ...current,
+        slots: nextSlots,
+      }
+    })
+
     setCurrentSlotTime('')
     setErrorMessage('')
+  }
+
+  const handleGenerateRangeSlots = () => {
+    const formatTime12 = (value) => {
+      const [h, m] = value.split(':')
+      const hour = parseInt(h, 10)
+      const period = hour >= 12 ? 'PM' : 'AM'
+      const hour12 = hour % 12 || 12
+      return `${hour12}:${m} ${period}`
+    }
+
+    const start = rangeStart.split(':').map(Number)
+    const end = rangeEnd.split(':').map(Number)
+    const interval = 30 // Professional default 30-minute interval
+
+    let current = start[0] * 60 + start[1]
+    const endTime = end[0] * 60 + end[1]
+
+    if (endTime <= current) {
+      setErrorMessage('Shift end time must be after start time.')
+      return
+    }
+
+    const newSlots = []
+    while (current <= endTime) {
+      const hh = Math.floor(current / 60)
+      const mm = current % 60
+      const timeString = `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`
+      newSlots.push(formatTime12(timeString))
+      current += interval
+    }
+
+    setDoctorForm((prev) => {
+      const nextSlots = { ...prev.slots }
+      selectedDays.forEach((day) => {
+        const daySlots = [...(nextSlots[day] || [])]
+        newSlots.forEach((slot) => {
+          if (!daySlots.includes(slot)) {
+            daySlots.push(slot)
+          }
+        })
+        nextSlots[day] = daySlots.sort((a, b) => {
+          const parse = (s) => {
+            const [time, period] = s.split(' ')
+            let [hh, mm] = time.split(':').map(Number)
+            if (period === 'PM' && hh !== 12) hh += 12
+            if (period === 'AM' && hh === 12) hh = 0
+            return hh * 60 + mm
+          }
+          return parse(a) - parse(b)
+        })
+      })
+      return { ...prev, slots: nextSlots }
+    })
+    setToastMessage(`Generated ${newSlots.length} full shift slots for ${selectedDays.length} days.`)
+    setErrorMessage('')
+  }
+
+  const handleClearSelectedDays = () => {
+    if (window.confirm(`Are you sure you want to clear all slots for: ${selectedDays.join(', ')}?`)) {
+      setDoctorForm((prev) => {
+        const nextSlots = { ...prev.slots }
+        selectedDays.forEach((day) => {
+          delete nextSlots[day]
+        })
+        return { ...prev, slots: nextSlots }
+      })
+      setToastMessage(`Cleared slots for selected days.`)
+    }
   }
 
   const handleRemoveSlot = (day, time) => {
@@ -367,33 +473,145 @@ const AdminDoctorsSection = () => {
                 </div>
 
                 <div className="col-12 mt-4">
-                  <span className="dashboard-section-card-label mb-2 d-block">Availability slots</span>
-                  <div className="admin-slot-picker-row">
-                    <select
-                      className="form-select w-auto"
-                      value={currentSlotDay}
-                      onChange={(e) => setCurrentSlotDay(e.target.value)}
-                    >
-                      <option value="monday">Monday</option>
-                      <option value="tuesday">Tuesday</option>
-                      <option value="wednesday">Wednesday</option>
-                      <option value="thursday">Thursday</option>
-                      <option value="friday">Friday</option>
-                      <option value="saturday">Saturday</option>
-                      <option value="sunday">Sunday</option>
-                    </select>
-                    <input
-                      type="time"
-                      className="form-control w-auto"
-                      value={currentSlotTime}
-                      onChange={(e) => setCurrentSlotTime(e.target.value)}
-                    />
+                  <span className="dashboard-section-card-label mb-2 d-block">
+                    Select days and time slot
+                  </span>
+                  <div className="admin-day-selector-grid mb-3">
+                    {DAYS_OF_WEEK.map((day) => {
+                      const isActive = selectedDays.includes(day.id)
+                      return (
+                        <button
+                          key={day.id}
+                          type="button"
+                          className={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline-secondary'}`}
+                          style={{
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            minWidth: '42px',
+                            transition: 'all 0.2s',
+                          }}
+                          onClick={() => handleToggleDay(day.id)}
+                        >
+                          {day.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <div className="d-flex flex-wrap gap-2 mb-3">
                     <button
                       type="button"
-                      className="btn btn-outline-primary"
-                      onClick={handleAddSlot}
+                      className="btn btn-link p-0 text-decoration-none small fw-bold"
+                      onClick={() => handleSelectPreset('all')}
                     >
-                      Add Slot
+                      + Daily
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 text-decoration-none small fw-bold"
+                      onClick={() => handleSelectPreset('weekdays')}
+                    >
+                      + Weekdays
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 text-decoration-none small fw-bold"
+                      onClick={() => handleSelectPreset('weekend')}
+                    >
+                      + Weekend
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 text-decoration-none small fw-bold text-danger ms-auto"
+                      onClick={() => setSelectedDays(['monday'])}
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  <div className="btn-group w-100 mb-4" role="group">
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${timeInputMode === 'single' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setTimeInputMode('single')}
+                      style={{ borderRadius: '12px 0 0 12px' }}
+                    >
+                      Single slot
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${timeInputMode === 'range' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setTimeInputMode('range')}
+                      style={{ borderRadius: '0 12px 12px 0' }}
+                    >
+                      Shift start/end
+                    </button>
+                  </div>
+
+                  {timeInputMode === 'single' ? (
+                    <div className="admin-slot-picker-row">
+                      <input
+                        type="time"
+                        className="form-control"
+                        style={{ flex: 1, borderRadius: '12px' }}
+                        value={currentSlotTime}
+                        onChange={(e) => setCurrentSlotTime(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary px-4"
+                        style={{ borderRadius: '12px' }}
+                        onClick={handleAddSlot}
+                      >
+                        Add Slot
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-light p-3 rounded-4 border border-primary-subtle">
+                      <div className="row g-2">
+                        <div className="col-5">
+                          <label className="form-label small text-muted mb-1">Shift start</label>
+                          <input
+                            type="time"
+                            className="form-control form-control-sm"
+                            value={rangeStart}
+                            onChange={(e) => setRangeStart(e.target.value)}
+                            style={{ borderRadius: '10px' }}
+                          />
+                        </div>
+                        <div className="col-5">
+                          <label className="form-label small text-muted mb-1">Shift end</label>
+                          <input
+                            type="time"
+                            className="form-control form-control-sm"
+                            value={rangeEnd}
+                            onChange={(e) => setRangeEnd(e.target.value)}
+                            style={{ borderRadius: '10px' }}
+                          />
+                        </div>
+                        <div className="col-2 d-flex align-items-end justify-content-end">
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm w-100"
+                            style={{ borderRadius: '10px', height: '31px' }}
+                            onClick={handleGenerateRangeSlots}
+                          >
+                            Add
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="d-flex justify-content-end mt-3">
+                    <button
+                      type="button"
+                      className="btn btn-link text-danger text-decoration-none small fw-bold p-0"
+                      onClick={handleClearSelectedDays}
+                    >
+                      <i className="bi bi-trash3 me-1"></i>
+                      Clear slots for selected days
                     </button>
                   </div>
 

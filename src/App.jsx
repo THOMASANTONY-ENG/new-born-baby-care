@@ -5,12 +5,14 @@ import Footer from './components/Footer'
 import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage'
 import Home from './pages/Home'
+import About from './pages/About'
 import ParentDashboard from './pages/Parentdashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminDoctorsSection from './pages/AdminDoctorsSection'
 import AdminFeedbackSection from './pages/AdminFeedbackSection'
 import AdminResourcesSection from './pages/AdminResourcesSection'
 import AdminUsersSection from './pages/AdminUsersSection'
+import AdminAppointmentsSection from './pages/AdminAppointmentsSection'
 import DashboardLayout from './layouts/DashboardLayout'
 import DoctorDashboard from './pages/DoctorDashboard'
 import { getLoggedInUser } from './utils/navigation'
@@ -21,6 +23,7 @@ import GrowthSection from './pages/GrowthSection'
 import NotesSection from './pages/NotesSection'
 import ParentResourcesSection from './pages/ParentResourcesSection'
 import DoctorProfilePage from './pages/DoctorProfilePage'
+import PrescriptionSection from './pages/PrescriptionSection'
 import ParentFeedbackSection from './pages/ParentFeedbackSection'
 
 const ProtectedDashboardLayout = () => {
@@ -94,6 +97,7 @@ const App = () => {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
         <Route
           path="/register"
           element={
@@ -116,11 +120,13 @@ const App = () => {
           <Route path="admin/doctors" element={<RoleRoute allowedRoles={['admin']}><AdminDoctorsSection /></RoleRoute>} />
           <Route path="admin/resources" element={<RoleRoute allowedRoles={['admin']}><AdminResourcesSection /></RoleRoute>} />
           <Route path="admin/feedback" element={<RoleRoute allowedRoles={['admin']}><AdminFeedbackSection /></RoleRoute>} />
+          <Route path="admin/appointments" element={<RoleRoute allowedRoles={['admin']}><AdminAppointmentsSection /></RoleRoute>} />
           <Route path="profile" element={<ViewBabyProfile />} />
           <Route path="vaccination" element={<VaccinationSection />} />
           <Route path="appointment" element={<AppointmentSection />} />
           <Route path="growth" element={<GrowthSection />} />
           <Route path="notes" element={<NotesSection />} />
+          <Route path="prescription" element={<RoleRoute allowedRoles={['doctor', 'parent']}><PrescriptionSection /></RoleRoute>} />
           <Route path="feedback" element={<RoleRoute allowedRoles={['parent']}><ParentFeedbackSection /></RoleRoute>} />
           <Route path="resources" element={<ParentResourcesSection />} />
           <Route path="doctor-profile" element={<RoleRoute allowedRoles={['doctor']}><DoctorProfilePage /></RoleRoute>} />

@@ -3,11 +3,58 @@ import { Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import '../components/style/parentdashboard.css'
 import { getSavedBabyProfile } from '../utils/babyProfile'
+import { getSavedAppointments } from '../utils/appointments'
 import { getLoggedInUser } from '../utils/navigation'
 import { getEffectiveUserEmail, getActivePatientEmail } from '../utils/doctorNavigation'
 import ActivePatientBanner from '../components/ActivePatientBanner'
 
 const hasProfileData = (profile = {}) => Object.values(profile).some(Boolean)
+const parseDate = (value) => {
+  if (!value) {
+    return null
+  }
+
+  const parsedDate = new Date(`${value}T00:00:00`)
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate
+}
+
+const formatAge = (dob) => {
+  const parsedDob = parseDate(dob)
+
+  if (!parsedDob) {
+    return 'Not available'
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const ageDays = Math.max(0, Math.floor((today - parsedDob) / 86400000))
+
+  if (ageDays < 30) {
+    return `${ageDays} day${ageDays === 1 ? '' : 's'} old`
+  }
+
+  const months = Math.floor(ageDays / 30.4)
+  if (months < 12) {
+    return `${months} month${months === 1 ? '' : 's'} old`
+  }
+
+  const years = Math.floor(months / 12)
+  return `${years} year${years === 1 ? '' : 's'} old`
+}
+
+const formatLastVisit = (email) => {
+  const appointments = getSavedAppointments(email)
+  const latestAppointment = [...appointments].reverse().find((appointment) => appointment.appointmentDate)
+
+  if (!latestAppointment) {
+    return 'No visits yet'
+  }
+
+  return `${latestAppointment.appointmentDate}${
+    latestAppointment.appointmentTime ? ` at ${latestAppointment.appointmentTime}` : ''
+  }`
+}
+
 const getBabyLabel = (familyType, index) =>
   familyType === 'twins' ? `Twin ${index === 0 ? 'A' : 'B'}` : 'Baby'
 
@@ -123,10 +170,22 @@ const ViewBabyProfile = () => {
                       <h3>{profile.weight || 'Not provided'}</h3>
                     </article>
                   </div>
+                  <div className="col-sm-6">
+                    <article className="dashboard-profile-detail-card">
+                      <span className="dashboard-section-card-label">Age</span>
+                      <h3>{formatAge(profile.dob)}</h3>
+                    </article>
+                  </div>
                   <div className="col-12">
                     <article className="dashboard-profile-detail-card">
                       <span className="dashboard-section-card-label">Height</span>
                       <h3>{profile.height || 'Not provided'}</h3>
+                    </article>
+                  </div>
+                  <div className="col-12">
+                    <article className="dashboard-profile-detail-card">
+                      <span className="dashboard-section-card-label">Last Visit</span>
+                      <h3>{formatLastVisit(effectiveEmail)}</h3>
                     </article>
                   </div>
                 </div>

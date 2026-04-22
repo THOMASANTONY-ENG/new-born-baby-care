@@ -82,6 +82,11 @@ const AdminDashboard = () => {
       path: '/dashboard/admin/resources',
       copy: 'Manage educational cards shown to parents and pediatricians on the public site.',
     },
+    {
+      title: 'Appointments',
+      path: '/dashboard/admin/appointments',
+      copy: 'Monitor and manage all medical bookings and clinical statuses across the entire system.',
+    },
   ]
 
   return (

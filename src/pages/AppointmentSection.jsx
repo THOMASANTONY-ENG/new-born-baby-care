@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import '../components/style/parentdashboard.css'
 import { getSavedBabyProfile } from '../utils/babyProfile'
 import { getLoggedInUser } from '../utils/navigation'
-import { getSavedAppointments, saveAppointment } from '../utils/appointments'
+import { getSavedAppointments, saveAppointment, deleteAppointment } from '../utils/appointments'
 import { getAvailableDoctors } from '../utils/doctors'
 import { getEffectiveUserEmail, getActivePatientEmail } from '../utils/doctorNavigation'
 import ActivePatientBanner from '../components/ActivePatientBanner'
@@ -174,13 +174,25 @@ const formatTime24 = (value) => {
   return `${hour12}:${min} ${period}`
 }
 
-const getAppointmentStatus = (appointmentDate, appointmentTime = '') => {
+const getAppointmentStatusView = (appointment) => {
+  const { status, appointmentDate, appointmentTime } = appointment
+  
+  // Professional color mapping
+  const statusStyles = {
+    'Scheduled': { label: 'Scheduled', color: '#0d6efd', bg: '#e7f0ff' },
+    'In-Progress': { label: 'In-Progress', color: '#9a6e03', bg: '#fffadb' },
+    'Completed': { label: 'Completed', color: '#198754', bg: '#e6f4ea' },
+    'No-show': { label: 'No-show', color: '#dc3545', bg: '#fdecf0' }
+  }
+
+  if (status && status !== 'Scheduled') return statusStyles[status]
+
+  // Fallback to time-based status for 'Scheduled' or missing status
   const apptDt = (() => {
     if (!appointmentDate) return null
     const base = new Date(`${appointmentDate}T00:00:00`)
     if (Number.isNaN(base.getTime())) return null
     if (appointmentTime) {
-      // Support both "HH:MM" (24h from input[type=time]) and "h:mm AM/PM"
       const m24 = appointmentTime.match(/^(\d{1,2}):(\d{2})$/)
       if (m24) {
         base.setHours(Number(m24[1]), Number(m24[2]), 0, 0)
@@ -206,7 +218,7 @@ const getAppointmentStatus = (appointmentDate, appointmentTime = '') => {
 
   if (apptDt < todayStart) return { label: 'Past', color: '#6b7280', bg: '#f3f4f6' }
   if (apptDt <= todayEnd) return { label: 'Today', color: '#b45309', bg: '#fef3c7' }
-  return { label: 'Upcoming', color: '#15803d', bg: '#dcfce7' }
+  return statusStyles['Scheduled']
 }
 
 const AppointmentSection = () => {
@@ -306,7 +318,11 @@ const AppointmentSection = () => {
 
   const handleBookAppointment = (event) => {
     event.preventDefault()
-    // Stage the appointment for in-page confirmation instead of window.confirm()
+    
+    // Find the unique email for the selected doctor to ensure ID-based linking
+    const doctorObj = doctors.find(d => d.name === appointmentForm.clinicName)
+    const doctorEmail = doctorObj ? doctorObj.email : ''
+
     setPendingAppointment({
       id: `${Date.now()}`,
       babyLabel: appointmentForm.babyLabel,
@@ -315,6 +331,8 @@ const AppointmentSection = () => {
       appointmentDate: appointmentForm.appointmentDate,
       appointmentTime: appointmentForm.appointmentTime,
       clinicName: appointmentForm.clinicName,
+      doctorEmail: doctorEmail, // Professional ID-based linking
+      status: 'Scheduled',
       notes: appointmentForm.notes,
     })
   }
@@ -337,6 +355,14 @@ const AppointmentSection = () => {
 
   const handleCancelPending = () => {
     setPendingAppointment(null)
+  }
+
+  const handleCancelAppointment = (id) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      const nextAppointments = deleteAppointment(id, effectiveEmail)
+      setSavedAppointments(nextAppointments)
+      setToastMessage('Appointment cancelled.')
+    }
   }
 
   if (isDoctor && !getActivePatientEmail()) {
@@ -659,9 +685,8 @@ const AppointmentSection = () => {
                         required
                       />
                       {availableSlots.length > 0 && (
-                        <div className="mt-2 d-flex flex-wrap gap-1">
+                        <div className="mt-3 d-flex flex-wrap gap-2">
                           {availableSlots.map((slot) => {
-                            // Convert "09:00 AM" → "09:00" for the time input
                             const toTime24 = (s) => {
                               const m = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
                               if (!m) return ''
@@ -669,21 +694,30 @@ const AppointmentSection = () => {
                               if (m[3].toUpperCase() === 'PM') h += 12
                               return `${String(h).padStart(2, '0')}:${m[2]}`
                             }
+                            const slot24 = toTime24(slot)
+                            const isSelected = appointmentForm.appointmentTime === slot24
+
                             return (
-                              <button
-                                key={slot}
-                                type="button"
-                                className="appointment-slot-chip"
-                                style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
-                                onClick={() =>
-                                  setAppointmentForm((prev) => ({
-                                    ...prev,
-                                    appointmentTime: toTime24(slot),
-                                  }))
-                                }
-                              >
-                                {slot}
-                              </button>
+                                <button
+                                    key={slot}
+                                    type="button"
+                                    className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-outline-primary'}`}
+                                    style={{ 
+                                        borderRadius: '10px',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 'bold',
+                                        minWidth: '85px',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onClick={() =>
+                                        setAppointmentForm((prev) => ({
+                                            ...prev,
+                                            appointmentTime: slot24,
+                                        }))
+                                    }
+                                >
+                                    {slot}
+                                </button>
                             )
                           })}
                         </div>
@@ -695,8 +729,11 @@ const AppointmentSection = () => {
                       )}
                     </div>
 
-                    <div className="col-12">
-                      <label className="form-label" htmlFor="clinicName">
+                    <div className="col-12 mt-4">
+                      <label 
+                        className="form-label" 
+                        htmlFor="clinicName"
+                      >
                         Select doctor
                       </label>
                       <select
@@ -704,9 +741,10 @@ const AppointmentSection = () => {
                         id="clinicName"
                         name="clinicName"
                         value={appointmentForm.clinicName}
-                        onChange={handleAppointmentChange}
+                        onChange={(e) => setAppointmentForm(prev => ({ ...prev, clinicName: e.target.value }))}
                         required
                       >
+                        <option value="">Choose a pediatrician...</option>
                         {doctors.map((doctor) => (
                           <option key={doctor.name} value={doctor.name}>
                             {doctor.name} - {doctor.specialty}
@@ -784,10 +822,8 @@ const AppointmentSection = () => {
 
             {savedAppointments.length ? (
               <div className="appointment-booking-list">
-                {savedAppointments.map((appointment) => {
-                  const status = getAppointmentStatus(appointment.appointmentDate, appointment.appointmentTime)
-                  return (
-                    <article className="appointment-saved-card" key={appointment.id}>
+                {savedAppointments.map((appointment) => (
+                  <article className="appointment-saved-card" key={appointment.id}>
                       <div className="appointment-saved-header">
                         <div>
                           <span className="dashboard-section-card-label">
@@ -797,18 +833,15 @@ const AppointmentSection = () => {
                         </div>
                         <div className="d-flex flex-wrap gap-2 align-items-center">
                           <span
+                            className="badge px-3 rounded-pill"
                             style={{
-                              display: 'inline-block',
-                              padding: '0.2rem 0.6rem',
-                              borderRadius: '6px',
                               fontSize: '0.72rem',
                               fontWeight: 700,
-                              background: status.bg,
-                              color: status.color,
-                              letterSpacing: '0.03em',
+                              background: getAppointmentStatusView(appointment).bg,
+                              color: getAppointmentStatusView(appointment).color,
                             }}
                           >
-                            {status.label}
+                            {getAppointmentStatusView(appointment).label}
                           </span>
                           <span className="appointment-chip">{appointment.visitType}</span>
                         </div>
@@ -821,9 +854,20 @@ const AppointmentSection = () => {
                       </div>
 
                       {appointment.notes && <p className="mb-0">{appointment.notes}</p>}
+
+                      {appointment.status === 'Scheduled' && (
+                        <div className="d-flex justify-content-end mt-3 border-top pt-2">
+                          <button 
+                            className="btn btn-link btn-sm text-danger text-decoration-none p-0 d-flex align-items-center gap-1"
+                            onClick={() => handleCancelAppointment(appointment.id)}
+                          >
+                            <i className="bi bi-trash-fill"></i>
+                            Cancel Appointment
+                          </button>
+                        </div>
+                      )}
                     </article>
-                  )
-                })}
+                ))}
               </div>
             ) : (
               <div className="dashboard-profile-empty-state">
@@ -913,7 +957,7 @@ const AppointmentSection = () => {
 
       {toastMessage && (
         <div className="dashboard-toast" role="status" aria-live="polite">
-          <strong>Booked</strong>
+          <strong>{toastMessage.includes('cancelled') ? 'Cancelled' : 'Booked'}</strong>
           <p className="mb-0">{toastMessage}</p>
         </div>
       )}

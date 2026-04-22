@@ -53,6 +53,7 @@ const normalizeFamilyBabyProfile = (profile) => {
     return {
       familyType: 'twins',
       babies: [0, 1].map((index) => normalizeBabyProfile(profile[index] ?? EMPTY_BABY_PROFILE)),
+      primaryDoctorEmail: '',
     }
   }
 
@@ -65,6 +66,7 @@ const normalizeFamilyBabyProfile = (profile) => {
       babies: Array.from({ length: babyCount }, (_, index) =>
         normalizeBabyProfile(profile.babies[index] ?? EMPTY_BABY_PROFILE)
       ),
+      primaryDoctorEmail: profile.primaryDoctorEmail ?? '',
     }
   }
 
@@ -72,6 +74,7 @@ const normalizeFamilyBabyProfile = (profile) => {
     return {
       familyType: 'single',
       babies: [normalizeBabyProfile(profile)],
+      primaryDoctorEmail: profile.primaryDoctorEmail ?? '',
     }
   }
 
@@ -103,6 +106,7 @@ export const saveBabyProfile = (profile, email = '') => {
     normalizeFamilyBabyProfile(profile) ?? {
       familyType: 'single',
       babies: createEmptyBabies(1),
+      primaryDoctorEmail: '',
     }
 
   window.localStorage.setItem(storageKey, JSON.stringify(normalizedProfile))

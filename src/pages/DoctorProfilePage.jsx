@@ -2,6 +2,50 @@ import React, { useState, useMemo } from 'react'
 import '../components/style/parentdashboard.css'
 import { getLoggedInUser } from '../utils/navigation'
 import { getDoctorByEmail, saveDoctor } from '../utils/doctors'
+import { getSavedAppointments } from '../utils/appointments'
+
+const parseDate = (value) => {
+  if (!value) return null
+  const parsedDate = new Date(`${value}T00:00:00`)
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate
+}
+
+const formatAge = (dob) => {
+  const parsedDob = parseDate(dob)
+
+  if (!parsedDob) {
+    return 'Not available'
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const ageDays = Math.max(0, Math.floor((today - parsedDob) / 86400000))
+
+  if (ageDays < 30) {
+    return `${ageDays} day${ageDays === 1 ? '' : 's'} old`
+  }
+
+  const months = Math.floor(ageDays / 30.4)
+  if (months < 12) {
+    return `${months} month${months === 1 ? '' : 's'} old`
+  }
+
+  const years = Math.floor(months / 12)
+  return `${years} year${years === 1 ? '' : 's'} old`
+}
+
+const formatLastVisit = (email) => {
+  const appointments = getSavedAppointments(email)
+  const latestAppointment = [...appointments].reverse().find((appointment) => appointment.appointmentDate)
+
+  if (!latestAppointment) {
+    return 'No visits yet'
+  }
+
+  return `${latestAppointment.appointmentDate}${
+    latestAppointment.appointmentTime ? ` at ${latestAppointment.appointmentTime}` : ''
+  }`
+}
 
 const getAllPatients = () => {
   const profilePrefix = 'babyProfile:'
@@ -192,6 +236,7 @@ const DoctorProfilePage = () => {
           <div className="row g-3">
             {patients.map((patient) => {
               const childNames = patient.babies.map((b) => b.name || 'Unnamed').join(', ')
+              const latestBaby = patient.babies[patient.babies.length - 1] ?? {}
               return (
                 <div className="col-md-6 col-xl-4" key={patient.email}>
                   <article
@@ -207,6 +252,11 @@ const DoctorProfilePage = () => {
                         <strong>Children:</strong> {childNames}
                       </p>
                     )}
+                    <div className="d-flex flex-column gap-1 mb-2 small text-muted">
+                      <span><strong>Last Weight:</strong> {latestBaby.weight || 'Not provided'}</span>
+                      <span><strong>Age:</strong> {formatAge(latestBaby.dob)}</span>
+                      <span><strong>Last Visit:</strong> {formatLastVisit(patient.email)}</span>
+                    </div>
                     <span
                       className="badge"
                       style={{

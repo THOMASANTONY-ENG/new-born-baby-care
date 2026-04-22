@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import '../components/style/login.css'
-import { authenticateUser, getRoleFromEmail, navigateTo } from '../utils/navigation'
+import { authenticateUser, navigateTo } from '../utils/navigation'
 
 const initialLoginForm = {
   email: '',
@@ -63,31 +63,28 @@ const LoginPage = () => {
     navigateTo('/register')
   }
 
-  const detectedRole = getRoleFromEmail(formData.email)
-
   return (
     <div className="login-page">
       <header className="login-header">
         <div className="container login-header-inner">
-          <a className="login-brand" href="/">
+          <Link className="login-brand" to="/">
             <span className="brand-mark">BB</span>
             <span>BabyBloom</span>
-          </a>
+          </Link>
 
           <div className="login-header-actions">
-            <a className="btn btn-outline-primary login-nav-btn" href="/">
+            <Link className="btn btn-outline-primary login-nav-btn" to="/">
               Back Home
-            </a>
-            <a
+            </Link>
+            <Link
               className="btn btn-outline-primary login-nav-btn"
-              href="/register"
-              onClick={handleRegisterNavigation}
+              to="/register"
             >
               Create Account
-            </a>
-            <a className="btn btn-primary login-nav-btn" href="#login-form">
+            </Link>
+            <Link className="btn btn-primary login-nav-btn" to="/#login-form">
               Sign In
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -178,23 +175,7 @@ const LoginPage = () => {
                                   onChange={handleChange}
                                   required
                                 />
-                                <div
-                                  className="mt-2 p-2 px-3 rounded-3 d-flex gap-2 align-items-start"
-                                  style={{
-                                    background: 'rgba(215,240,232,0.6)',
-                                    border: '1px solid rgba(70,113,101,0.2)',
-                                    fontSize: '0.85rem',
-                                    color: '#467165',
-                                  }}
-                                  role="note"
-                                >
-                                  <span style={{ marginTop: 1 }}>i</span>
-                                  <span>
-                                    <strong>admin@...</strong> {'->'} Admin dashboard.
-                                    <strong> Admin-added doctor email</strong> {'->'} Doctor
-                                    dashboard. All other emails {'->'} Parent dashboard.
-                                  </span>
-                                </div>
+
                               </div>
 
                               <div className="col-12">
@@ -237,13 +218,7 @@ const LoginPage = () => {
                               </div>
                             </div>
 
-                            <div className="login-stat-card mt-4">
-                              <strong>Detected role: {detectedRole}</strong>
-                              <p className="mb-0">
-                                Doctor login works with the email and password set by admin in the
-                                doctor directory.
-                              </p>
-                            </div>
+
 
                             <button className="btn btn-primary login-submit" type="submit">
                               Sign in now
@@ -251,9 +226,9 @@ const LoginPage = () => {
 
                             <p className="login-switch-copy">
                               New to BabyBloom?{' '}
-                              <a href="/register" onClick={handleRegisterNavigation}>
+                              <Link to="/register">
                                 Create an account
-                              </a>
+                              </Link>
                             </p>
                           </form>
                         )}

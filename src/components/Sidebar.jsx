@@ -22,6 +22,7 @@ const roleMenu = {
     { name: 'Appointments', path: '/dashboard/appointment', icon: <FaUserMd /> },
     { name: 'Growth', path: '/dashboard/growth', icon: <FaChartLine /> },
     { name: 'Notes', path: '/dashboard/notes', icon: <FaStickyNote /> },
+    { name: 'Prescriptions', path: '/dashboard/prescription', icon: <FaClipboardList /> },
     { name: 'Feedback', path: '/dashboard/feedback', icon: <FaCommentDots /> },
     { name: 'Resources', path: '/dashboard/resources', icon: <FaFolderOpen /> },
   ],
@@ -37,6 +38,7 @@ const roleMenu = {
     { name: 'Appointments', path: '/dashboard/appointment', icon: <FaUserMd /> },
     { name: 'Growth', path: '/dashboard/growth', icon: <FaChartLine /> },
     { name: 'Notes', path: '/dashboard/notes', icon: <FaStickyNote /> },
+    { name: 'Prescriptions', path: '/dashboard/prescription', icon: <FaClipboardList /> },
     { name: 'My Profile', path: '/dashboard/doctor-profile', icon: <FaUserCircle /> },
   ],
 }

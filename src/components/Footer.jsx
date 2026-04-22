@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { getLoggedInUser, navigateTo } from '../utils/navigation'
 
 const Footer = () => {
@@ -27,20 +28,20 @@ const Footer = () => {
           <div className="col-sm-6 col-lg-2">
             <h5>Explore</h5>
             <ul className="footer-links">
-              <li><a href="#home">Home</a></li>
-              <li><a href="#features">Features</a></li>
-              <li><a href="#works">How It Works</a></li>
-              <li><a href="#testimonial">Reviews</a></li>
+              <li><Link to="/#home">Home</Link></li>
+              <li><Link to="/#features">Features</Link></li>
+              <li><Link to="/#works">How It Works</Link></li>
+              <li><Link to="/#testimonial">Reviews</Link></li>
             </ul>
           </div>
 
           <div className="col-sm-6 col-lg-3">
             <h5>Support</h5>
             <ul className="footer-links">
-              <li><a href="#pediatricians">Doctors</a></li>
-              <li><a href="#education">Resources</a></li>
-              <li><a href="#features">Vaccination Tracking</a></li>
-              <li><a href="#footer">Contact</a></li>
+              <li><Link to="/#pediatricians">Doctors</Link></li>
+              <li><Link to="/#education">Resources</Link></li>
+              <li><Link to="/#features">Vaccination Tracking</Link></li>
+              <li><Link to="/#footer">Contact</Link></li>
             </ul>
           </div>
 

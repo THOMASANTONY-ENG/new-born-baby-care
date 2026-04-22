@@ -34,6 +34,8 @@ const normalizeAppointment = (appointment = {}) => ({
   appointmentDate: appointment.appointmentDate ?? '',
   appointmentTime: appointment.appointmentTime ?? '',
   clinicName: appointment.clinicName ?? '',
+  doctorEmail: appointment.doctorEmail ?? '',
+  status: appointment.status ?? 'Scheduled', // 'Scheduled', 'In-Progress', 'Completed', 'No-show'
   notes: appointment.notes ?? '',
 })
 
@@ -117,4 +119,45 @@ export const saveAppointment = (appointment, email = '') => {
   }
 
   return nextAppointments
+}
+
+export const updateAppointmentStatus = (appointmentId, newStatus, email = '') => {
+  const storageKey = getStorageKey(email)
+  const savedAppointments = getSavedAppointments(email)
+  const nextAppointments = savedAppointments.map((appointment) => 
+    appointment.id === appointmentId ? { ...appointment, status: newStatus } : appointment
+  )
+
+  window.localStorage.setItem(storageKey, JSON.stringify(nextAppointments))
+
+  return nextAppointments
+}
+
+export const deleteAppointment = (appointmentId, email = '') => {
+  const storageKey = getStorageKey(email)
+  const savedAppointments = getSavedAppointments(email)
+  const nextAppointments = savedAppointments.filter((appointment) => appointment.id !== appointmentId)
+
+  window.localStorage.setItem(storageKey, JSON.stringify(nextAppointments))
+
+  return nextAppointments
+}
+
+export const getAllAppointments = () => {
+  const allAppointments = []
+
+  for (let i = 0; i < window.localStorage.length; i++) {
+    const key = window.localStorage.key(i) || ""
+
+    if (key.startsWith(APPOINTMENTS_STORAGE_PREFIX)) {
+      const email = key.replace(APPOINTMENTS_STORAGE_PREFIX, '')
+      const appointments = readStoredAppointments(key).map((appointment) => ({
+        ...normalizeAppointment(appointment),
+        parentEmail: email,
+      }))
+      allAppointments.push(...appointments)
+    }
+  }
+
+  return allAppointments.sort(compareAppointments)
 }

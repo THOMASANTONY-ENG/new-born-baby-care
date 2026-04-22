@@ -7,6 +7,8 @@ import { getSavedBabyProfile, saveBabyProfile } from '../utils/babyProfile'
 import { getSharedResources } from '../utils/sharedResources'
 import { getSavedCareNotes } from '../utils/careNotes'
 import { getSavedGrowthLogs } from '../utils/growthLogs'
+import { getPrescriptions } from '../utils/prescriptions'
+import { getAvailableDoctors } from '../utils/doctors'
 
 const emptyBabyProfile = {
   name: '',
@@ -19,6 +21,7 @@ const emptyBabyProfile = {
 const emptyFamilyProfile = {
   familyType: 'single',
   babies: [{ ...emptyBabyProfile }],
+  primaryDoctorEmail: '',
 }
 
 const normalizeBabyProfile = (profile = {}) => ({
@@ -39,6 +42,7 @@ const normalizeFamilyProfile = (profile = emptyFamilyProfile) => {
   return {
     familyType,
     babies,
+    primaryDoctorEmail: profile?.primaryDoctorEmail ?? '',
   }
 }
 
@@ -211,6 +215,8 @@ const ParentDashboard = () => {
   const [toastMessage, setToastMessage] = useState('')
   const [profileErrors, setProfileErrors] = useState({})
   const [sharedResources] = useState(() => getSharedResources(loggedInUser?.email))
+  const [prescriptions, setPrescriptions] = useState(() => getPrescriptions(loggedInUser?.email))
+  const [availableDoctors] = useState(() => getAvailableDoctors())
 
   useEffect(() => {
     if (!toastMessage) {
@@ -223,6 +229,24 @@ const ParentDashboard = () => {
 
     return () => window.clearTimeout(timeoutId)
   }, [toastMessage])
+
+  useEffect(() => {
+    setPrescriptions(getPrescriptions(loggedInUser?.email))
+  }, [loggedInUser?.email])
+
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (event.key && !event.key.startsWith('babyPrescriptions:')) {
+        return
+      }
+
+      setPrescriptions(getPrescriptions(loggedInUser?.email))
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [loggedInUser?.email])
 
   const handleFamilyTypeChange = (event) => {
     const nextFamilyType = event.target.value
@@ -244,6 +268,7 @@ const ParentDashboard = () => {
           : [primaryBabyDraft]
 
       return {
+        ...current,
         familyType: nextFamilyType,
         babies: nextBabies,
       }
@@ -604,33 +629,115 @@ const ParentDashboard = () => {
                     </div>
                   </section>
 
-                  {isParentView && sharedResources.length > 0 && (
-                    <section className="mb-5 dashboard-section-panel border-primary" style={{ borderWidth: '2px', borderStyle: 'solid', borderRadius: '8px', padding: '1.5rem' }} aria-labelledby="prescriptions-heading">
+                  {isParentView && (
+                    <section
+                      id="prescriptions"
+                      className="mb-5 dashboard-section-panel border-primary"
+                      style={{ borderWidth: '2px', borderStyle: 'solid', borderRadius: '8px', padding: '1.5rem' }}
+                      aria-labelledby="prescriptions-heading"
+                    >
                       <div className="d-flex flex-wrap justify-content-between gap-3 align-items-start mb-3">
                         <div>
                           <span className="dashboard-section-card-label text-primary">Provider Prescriptions</span>
                           <h2 className="h5 mt-2 mb-1" id="prescriptions-heading">
-                            Educational packets from your doctor
+                            Formal medical instructions from your doctor
                           </h2>
                           <p className="mb-0 text-muted">
-                            Your healthcare provider assigned the following reading materials for your family.
+                            Review the medication plan, dose, timing, and follow-up notes for your family.
                           </p>
                         </div>
+                        <span className="dashboard-save-badge">
+                          {prescriptions.length > 0
+                            ? `${prescriptions.length} item${prescriptions.length === 1 ? '' : 's'}`
+                            : 'No active prescription'}
+                        </span>
                       </div>
-                      <div className="row g-3">
-                        {sharedResources.map((res) => (
-                          <div className="col-md-6" key={res.id}>
-                            <article className="dashboard-care-status-card h-100 border border-primary">
-                              <span className="dashboard-section-card-label">Shared on {new Date(res.sharedAt).toLocaleDateString()}</span>
-                              <h3 className="h6 mt-2 mb-2">{res.title}</h3>
-                              <p className="mb-0 text-muted small">{res.description}</p>
-                              <a href={res.link} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm mt-3 align-self-start">
-                                Read More
-                              </a>
-                            </article>
-                          </div>
-                        ))}
-                      </div>
+
+                      {prescriptions.length > 0 ? (
+                        <div className="row g-3">
+                          {prescriptions.map((rx) => (
+                            <div className="col-md-6" key={rx.id}>
+                              <article className="dashboard-twin-summary-card h-100">
+                                <div className="d-flex justify-content-between gap-3 align-items-start mb-3">
+                                  <div>
+                                    <span className="dashboard-section-card-label">Prescribed on {new Date(rx.prescribedAt).toLocaleDateString()}</span>
+                                    <h3 className="h6 mt-2 mb-1">{rx.medication}</h3>
+                                    <p className="mb-0 text-muted small">
+                                      Take exactly as directed below.
+                                    </p>
+                                  </div>
+                                  <span className="dashboard-save-badge">Active</span>
+                                </div>
+
+                                <div className="row g-2 mb-3">
+                                  <div className="col-sm-6">
+                                    <article className="dashboard-profile-mini-card h-100">
+                                      <span className="dashboard-section-card-label">Dose</span>
+                                      <strong>{rx.dosage || 'Not added'}</strong>
+                                    </article>
+                                  </div>
+                                  <div className="col-sm-6">
+                                    <article className="dashboard-profile-mini-card h-100">
+                                      <span className="dashboard-section-card-label">Route</span>
+                                      <strong>{rx.route || 'Not added'}</strong>
+                                    </article>
+                                  </div>
+                                  <div className="col-sm-6">
+                                    <article className="dashboard-profile-mini-card h-100">
+                                      <span className="dashboard-section-card-label">Frequency</span>
+                                      <strong>{rx.frequency || 'Not added'}</strong>
+                                    </article>
+                                  </div>
+                                  <div className="col-sm-6">
+                                    <article className="dashboard-profile-mini-card h-100">
+                                      <span className="dashboard-section-card-label">Duration</span>
+                                      <strong>{rx.duration || 'Not added'}</strong>
+                                    </article>
+                                  </div>
+                                </div>
+
+                                <article className="prescription-instructions-card-compact px-3 py-2 mb-2">
+                                  <span className="dashboard-section-card-label d-block mb-1">Medication instructions</span>
+                                  <strong className="d-block prescription-instructions-title mb-1">How to give this medicine</strong>
+                                  <p className="prescription-instructions-copy mb-0">{rx.instructions || 'No extra instructions added.'}</p>
+                                </article>
+
+                                <div className="d-flex flex-column gap-2 small text-muted">
+                                  {rx.warnings && (
+                                    <div>
+                                      <strong className="text-danger">Warning:</strong> {rx.warnings}
+                                    </div>
+                                  )}
+                                  {rx.followUp && (
+                                    <div>
+                                      <strong>Follow-up:</strong> {rx.followUp}
+                                    </div>
+                                  )}
+                                </div>
+                              </article>
+                            </div>
+                          ))}
+                        </div>
+                      ) : sharedResources.length > 0 ? (
+                        <div className="row g-3">
+                          {sharedResources.map((res) => (
+                            <div className="col-md-6" key={res.id}>
+                              <article className="dashboard-care-status-card h-100 border border-primary">
+                                <span className="dashboard-section-card-label">Shared on {new Date(res.sharedAt).toLocaleDateString()}</span>
+                                <h3 className="h6 mt-2 mb-2">{res.title}</h3>
+                                <p className="mb-0 text-muted small">{res.description}</p>
+                                <a href={res.link} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm mt-3 align-self-start">
+                                  Read More
+                                </a>
+                              </article>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="dashboard-profile-empty-state">
+                          No prescriptions have been saved yet. Once the doctor issues one, it will appear here automatically.
+                        </div>
+                      )}
                     </section>
                   )}
 
@@ -664,6 +771,29 @@ const ParentDashboard = () => {
                         </select>
                       </div>
 
+                      <div className="dashboard-family-toggle mb-4">
+                        <label className="form-label" htmlFor="primaryDoctorEmail">
+                          Primary Pediatrician
+                        </label>
+                        <select
+                          className="form-select"
+                          id="primaryDoctorEmail"
+                          name="primaryDoctorEmail"
+                          value={profileDraft.primaryDoctorEmail}
+                          onChange={(e) => setProfileDraft(curr => ({ ...curr, primaryDoctorEmail: e.target.value }))}
+                        >
+                          <option value="">Select a doctor</option>
+                          {availableDoctors.map(doctor => (
+                            <option key={doctor.email} value={doctor.email}>
+                              {doctor.name} - {doctor.specialty}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="form-text text-muted small mt-1">
+                          Selecting a pediatrician allows them to view your baby's health records and send prescriptions.
+                        </p>
+                      </div>
+
                       <div className="row g-4">
                         {profileDraft.babies.map((profile, index) => (
                           <div
@@ -677,8 +807,7 @@ const ParentDashboard = () => {
                                   {getBabyLabel(profileDraft.familyType, index)}
                                 </h3>
                                 <p className="mb-0 text-muted">
-                                  Save health details for appointments, growth tracking, and daily
-                                  care.
+                                  Save health details for appointments, growth tracking, and daily care.
                                 </p>
                               </div>
 
@@ -898,6 +1027,23 @@ const ParentDashboard = () => {
                       Open Full Profile
                     </Link>
                   </div>
+
+                  {savedProfile.primaryDoctorEmail && (
+                    <article className="dashboard-section-panel mt-4 border border-primary-subtle bg-light-subtle">
+                      <span className="dashboard-section-card-label">Primary Pediatrician</span>
+                      <div className="d-flex align-items-center gap-3 mt-2">
+                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                          <i className="bi bi-person-badge"></i>
+                        </div>
+                        <div>
+                          <h3 className="h6 mb-0">
+                            {availableDoctors.find(d => d.email === savedProfile.primaryDoctorEmail)?.name || 'Doctor'}
+                          </h3>
+                          <p className="small text-muted mb-0">{savedProfile.primaryDoctorEmail}</p>
+                        </div>
+                      </div>
+                    </article>
+                  )}
                 </section>
               )}
             </div>

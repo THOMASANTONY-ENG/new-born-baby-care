@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import '../components/style/register.css'
 import { navigateTo, saveLoggedInUser } from '../utils/navigation'
 import { userEmailExists, saveUser } from '../utils/users'
@@ -75,21 +76,21 @@ const RegisterPage = () => {
     <div className="register-page">
       <header className="register-header">
         <div className="container register-header-inner">
-          <a className="register-brand" href="/">
+          <Link className="register-brand" to="/">
             <span className="brand-mark">BB</span>
             <span>BabyBloom</span>
-          </a>
+          </Link>
 
           <div className="register-header-actions">
-            <a className="btn btn-outline-primary register-nav-btn" href="/">
+            <Link className="btn btn-outline-primary register-nav-btn" to="/">
               Back Home
-            </a>
-            <a className="btn btn-outline-primary register-nav-btn" href="/login" onClick={handleLoginNavigation}>
+            </Link>
+            <Link className="btn btn-outline-primary register-nav-btn" to="/login">
               Sign In
-            </a>
-            <a className="btn btn-primary register-nav-btn" href="#register-form">
+            </Link>
+            <Link className="btn btn-primary register-nav-btn" to="/#register-form">
               Create Account
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -159,9 +160,9 @@ const RegisterPage = () => {
                               Welcome, {formData.fullName || 'Parent'}! Redirecting you to
                               your parent dashboard now.
                             </p>
-                            <a className="btn btn-primary" href="/dashboard">
-                              Open dashboard
-                            </a>
+                            <Link className="btn btn-primary" to="/dashboard">
+                                Open dashboard
+                              </Link>
                           </div>
                         ) : (
                           <form className="register-form" onSubmit={handleSubmit}>
@@ -315,9 +316,9 @@ const RegisterPage = () => {
 
                             <p className="register-switch-copy">
                               Already have an account?{' '}
-                              <a href="/login" onClick={handleLoginNavigation}>
+                              <Link to="/login">
                                 Sign in
-                              </a>
+                              </Link>
                             </p>
                           </form>
                         )}

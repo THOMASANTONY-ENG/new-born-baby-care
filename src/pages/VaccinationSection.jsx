@@ -547,9 +547,8 @@ const VaccinationSection = () => {
                   <h3>{displayName}</h3>
                 </div>
                 <span
-                  className={`vaccination-status vaccination-status-${
-                    ageDays === null ? 'planned' : 'due'
-                  }`}
+                  className={`vaccination-status vaccination-status-${ageDays === null ? 'planned' : 'due'
+                    }`}
                 >
                   {ageDays === null ? 'Needs DOB' : `Next: ${nextDueStage.ageLabel}`}
                 </span>
@@ -588,55 +587,55 @@ const VaccinationSection = () => {
                       </div>
                       <div className="vaccination-stage-list">
                         {stage.vaccines.map((vaccine) => {
-                            const doneKey = `${label}-${stage.ageLabel}-${vaccine.name}`
-                            const isDone = Boolean(doneVaccines[doneKey])
-                            return (
-                              <article
-                                className="vaccination-vaccine-item"
-                                key={`${stage.ageLabel}-${vaccine.name}`}
-                                style={isDone ? { opacity: 0.72 } : undefined}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4 }}>
-                                  <input
-                                    type="checkbox"
-                                    id={doneKey}
-                                    checked={isDone}
-                                    onChange={() => toggleDone(doneKey)}
-                                    style={{ marginTop: 3, accentColor: '#467165', cursor: 'pointer', flexShrink: 0 }}
-                                    aria-label={`Mark ${vaccine.name} as done`}
-                                  />
-                                  <label htmlFor={doneKey} style={{ cursor: 'pointer', flex: 1 }}>
-                                    <strong style={isDone ? { textDecoration: 'line-through', color: 'var(--text-soft)' } : undefined}>
-                                      {vaccine.name}
-                                    </strong>
-                                    {isDone && (
-                                      <span
-                                        style={{
-                                          marginLeft: 8,
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          padding: '2px 8px',
-                                          borderRadius: 999,
-                                          background: 'rgba(223, 244, 239, 0.95)',
-                                          color: '#467165',
-                                          fontSize: '0.75rem',
-                                          fontWeight: 700,
-                                        }}
-                                      >
-                                        Done ✓
-                                      </span>
-                                    )}
-                                  </label>
-                                </div>
-                                <p className="mb-2" style={{ paddingLeft: 26 }}>{vaccine.timing}</p>
-                                <div className="vaccination-vaccine-meta" style={{ paddingLeft: 26 }}>
-                                  <span>Dose: {vaccine.dose}</span>
-                                  <span>Route: {vaccine.route}</span>
-                                  <span>Site: {vaccine.site}</span>
-                                </div>
-                              </article>
-                            )
-                          })}
+                          const doneKey = `${label}-${stage.ageLabel}-${vaccine.name}`
+                          const isDone = Boolean(doneVaccines[doneKey])
+                          return (
+                            <article
+                              className="vaccination-vaccine-item"
+                              key={`${stage.ageLabel}-${vaccine.name}`}
+                              style={isDone ? { opacity: 0.72 } : undefined}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4 }}>
+                                <input
+                                  type="checkbox"
+                                  id={doneKey}
+                                  checked={isDone}
+                                  onChange={() => toggleDone(doneKey)}
+                                  style={{ marginTop: 3, accentColor: '#467165', cursor: 'pointer', flexShrink: 0 }}
+                                  aria-label={`Mark ${vaccine.name} as done`}
+                                />
+                                <label htmlFor={doneKey} style={{ cursor: 'pointer', flex: 1 }}>
+                                  <strong style={isDone ? { textDecoration: 'line-through', color: 'var(--text-soft)' } : undefined}>
+                                    {vaccine.name}
+                                  </strong>
+                                  {isDone && (
+                                    <span
+                                      style={{
+                                        marginLeft: 8,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        padding: '2px 8px',
+                                        borderRadius: 999,
+                                        background: 'rgba(223, 244, 239, 0.95)',
+                                        color: '#467165',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      Done ✓
+                                    </span>
+                                  )}
+                                </label>
+                              </div>
+                              <p className="mb-2" style={{ paddingLeft: 26 }}>{vaccine.timing}</p>
+                              <div className="vaccination-vaccine-meta" style={{ paddingLeft: 26 }}>
+                                <span>Dose: {vaccine.dose}</span>
+                                <span>Route: {vaccine.route}</span>
+                                <span>Site: {vaccine.site}</span>
+                              </div>
+                            </article>
+                          )
+                        })}
                       </div>
                     </article>
                   )
