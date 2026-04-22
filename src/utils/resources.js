@@ -13,6 +13,7 @@ const defaultResources = [
     description: 'Learn breastfeeding basics, formula guidance, and healthy feeding routines for the first months.',
     audience: 'Parents',
     image: nutrition,
+    link: 'https://www.who.int/health-topics/breastfeeding',
     source: 'seed',
   },
   {
@@ -21,6 +22,7 @@ const defaultResources = [
     description: 'Build a gentle sleep schedule and understand how to support better rest for your baby.',
     audience: 'Parents',
     image: hero1,
+    link: 'https://www.sleepfoundation.org/baby-sleep',
     source: 'seed',
   },
   {
@@ -29,6 +31,7 @@ const defaultResources = [
     description: 'Follow recommended vaccine timelines and understand what to expect during each visit.',
     audience: 'Parents',
     image: doc6,
+    link: 'https://www.cdc.gov/vaccines/parents/index.html',
     source: 'seed',
   },
   {
@@ -37,6 +40,7 @@ const defaultResources = [
     description: 'Know when to schedule checkups, what signs to watch, and when to speak with a doctor.',
     audience: 'Parents and pediatricians',
     image: doc1,
+    link: 'https://www.healthychildren.org/English/family-life/health-management/Pages/Well-Child-Care.aspx',
     source: 'seed',
   },
 ]
@@ -52,6 +56,7 @@ const normalizeResource = (resource = {}) => ({
   description: resource.description ?? 'No description added.',
   audience: resource.audience ?? 'Parents',
   image: resource.image ?? pickResourceImage(resource.audience),
+  link: resource.link ?? '',
   source: resource.source ?? 'custom',
 })
 

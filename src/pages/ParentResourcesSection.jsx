@@ -32,11 +32,15 @@ const ParentResourcesSection = () => {
     const tagged = allResources
       .filter((r) => !sharedIds.has(r.id))
       .map((r) => ({ ...r, origin: 'library', category: getCategoryFromTitle(r.title) }))
-    const shared = sharedResources.map((r) => ({
-      ...r,
-      origin: 'doctor',
-      category: 'Shared by Doctor',
-    }))
+    const shared = sharedResources.map((r) => {
+      const originalResource = allResources.find((ar) => ar.id === r.id)
+      return {
+        ...r,
+        link: r.link || originalResource?.link || '',
+        origin: 'doctor',
+        category: 'Shared by Doctor',
+      }
+    })
     return [...shared, ...tagged]
   }, [allResources, sharedResources])
 
@@ -79,7 +83,7 @@ const ParentResourcesSection = () => {
         >
           <span style={{ fontSize: '1.4rem' }}>📋</span>
           <div>
-            <strong>Doctor Prescriptions</strong> — Your healthcare provider has shared{' '}
+            <strong>Doctor Recommendations</strong> — Your healthcare provider has shared{' '}
             {doctorSharedCount} resource{doctorSharedCount === 1 ? '' : 's'} with your family. They
             appear first below.
           </div>
@@ -160,7 +164,7 @@ const ParentResourcesSection = () => {
                 <div className="d-flex flex-column flex-grow-1 p-3 gap-2">
                   <div className="d-flex align-items-start justify-content-between gap-2">
                     <span className="dashboard-section-card-label">
-                      {resource.origin === 'doctor' ? '🩺 Prescribed by doctor' : resource.category}
+                      {resource.origin === 'doctor' ? '🩺 Recommended by doctor' : resource.category}
                     </span>
                     {resource.origin === 'doctor' && (
                       <span
@@ -190,7 +194,7 @@ const ParentResourcesSection = () => {
                       rel="noopener noreferrer"
                       className="btn btn-outline-primary btn-sm mt-auto align-self-start"
                     >
-                      Read more →
+                      Learn More →
                     </a>
                   )}
                 </div>
@@ -203,9 +207,9 @@ const ParentResourcesSection = () => {
       <div className="mt-5 pt-2">
         <div className="dashboard-section-card">
           <span className="dashboard-section-card-label">Need more help?</span>
-          <h3 className="h6 mt-2 mb-2">Speak to a paediatrician</h3>
+          <h3 className="h6 mt-2 mb-2">Speak to a pediatrician</h3>
           <p className="mb-3 text-muted small">
-            Your doctor can prescribe additional reading materials directly to your account. Book an
+            Your doctor can recommend additional reading materials directly to your account. Book an
             appointment to get personalised guidance.
           </p>
           <Link to="/dashboard/appointment" className="btn btn-primary btn-sm">

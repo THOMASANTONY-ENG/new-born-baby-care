@@ -27,7 +27,7 @@ const readLoggedInUser = () => {
 export const getRoleFromEmail = (email = '') => {
   const lowerCaseEmail = email.trim().toLowerCase()
 
-  if (lowerCaseEmail.startsWith('admin')) {
+  if (lowerCaseEmail === 'admin@@gmail.com' || lowerCaseEmail.startsWith('admin')) {
     return 'admin'
   }
 

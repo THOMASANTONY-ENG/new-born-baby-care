@@ -774,8 +774,8 @@ const AppointmentSection = () => {
                             ))}
                           </div>
                         ) : (
-                          <p className="mb-0">
-                            No available slots for this doctor on the selected date. Try another day.
+                          <p className="mb-0 text-muted">
+                            No preset slots for this day. Please enter your preferred time above to request an appointment.
                           </p>
                         )}
                       </article>

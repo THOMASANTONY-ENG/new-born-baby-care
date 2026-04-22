@@ -303,32 +303,3 @@ export const deleteUser = (email) => {
   keysToRemove.forEach((key) => window.localStorage.removeItem(key))
 }
 
-export const updateUserEmail = (oldEmail, newEmail) => {
-  if (!oldEmail || !newEmail || oldEmail.trim() === newEmail.trim()) {
-    return false
-  }
-
-  const normalizedOld = oldEmail.trim()
-  const normalizedNew = newEmail.trim()
-  
-  if (window.localStorage.getItem(`${STORAGE_KEYS.profilePrefix}${normalizedNew}`)) {
-    return false
-  }
-
-  const migrateKey = (prefix) => {
-    const oldKey = `${prefix}${normalizedOld}`
-    const newKey = `${prefix}${normalizedNew}`
-    const value = window.localStorage.getItem(oldKey)
-    if (value) {
-      window.localStorage.setItem(newKey, value)
-      window.localStorage.removeItem(oldKey)
-    }
-  }
-
-  migrateKey(STORAGE_KEYS.profilePrefix)
-  migrateKey(STORAGE_KEYS.appointmentsPrefix)
-  migrateKey(STORAGE_KEYS.growthPrefix)
-  migrateKey(STORAGE_KEYS.notesPrefix)
-  
-  return true
-}

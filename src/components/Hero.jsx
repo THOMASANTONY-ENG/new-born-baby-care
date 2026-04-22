@@ -2,17 +2,20 @@ import React, { useState } from 'react'
 import { Carousel } from 'react-bootstrap'
 import './style/index.css'
 import hero1 from '../assets/hero1.jpg'
-import { navigateTo } from '../utils/navigation'
+import { navigateTo, getLoggedInUser } from '../utils/navigation'
 
 const Hero = () => {
   const [activeIndex, setActiveIndex] = useState(0)
+  const loggedInUser = getLoggedInUser()
 
   const slides = [
     {
       image: hero1,
       title: 'Simple newborn care tracking for everyday parenting',
       description: 'Follow feeding, growth, vaccination, and health updates from one calm and easy dashboard.',
-      primaryAction: { label: 'Create Account', href: '/register' },
+      primaryAction: loggedInUser 
+        ? { label: 'Enter Dashboard', href: '/dashboard' }
+        : { label: 'Create Account', href: '/register' },
       secondaryAction: { label: 'Learn More', href: '#education' }
     },
     {

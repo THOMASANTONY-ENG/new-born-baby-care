@@ -2,12 +2,10 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import '../components/style/parentdashboard.css'
 import { getLoggedInUser } from '../utils/navigation'
-import { getAdminDashboardData, deleteUser, updateUserEmail } from '../utils/adminDashboard'
+import { getAdminDashboardData, deleteUser } from '../utils/adminDashboard'
 
 const AdminUsersSection = () => {
   const [refreshTick, setRefreshTick] = useState(0)
-  const [editingEmail, setEditingEmail] = useState(null)
-  const [editDraft, setEditDraft] = useState('')
   const [toastMessage, setToastMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -31,21 +29,6 @@ const AdminUsersSection = () => {
     }
   }
 
-  const handleUpdate = (oldEmail) => {
-    const success = updateUserEmail(oldEmail, editDraft)
-    if (success) {
-      setToastMessage('User email updated successfully.')
-      setEditingEmail(null)
-      setRefreshTick((t) => t + 1)
-    } else {
-      setToastMessage('Update failed. New email might already be in use.')
-    }
-  }
-
-  const startEdit = (email) => {
-    setEditingEmail(email)
-    setEditDraft(email)
-  }
 
   const getProfileStatus = (entry) => {
     if (!entry.activeBabies.length) {
@@ -248,33 +231,14 @@ const AdminUsersSection = () => {
                   return (
                     <tr key={entry.email}>
                       <td data-label="Account">
-                        {editingEmail === entry.email ? (
-                          <div className="admin-inline-editor">
-                            <input
-                              type="email"
-                              value={editDraft}
-                              onChange={(event) => setEditDraft(event.target.value)}
-                              className="form-control form-control-sm"
-                            />
-                            <div className="d-flex gap-2 mt-2">
-                              <button className="btn btn-primary btn-sm" onClick={() => handleUpdate(entry.email)}>
-                                Save
-                              </button>
-                              <button className="btn btn-outline-danger btn-sm" onClick={() => setEditingEmail(null)}>
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="admin-table-primary">
-                            <strong>{entry.email}</strong>
-                            <span className="dashboard-inline-hint">
-                              {entry.missingDobCount > 0
-                                ? `${entry.missingDobCount} profile${entry.missingDobCount === 1 ? '' : 's'} missing DOB`
-                                : 'Core baby records available'}
-                            </span>
-                          </div>
-                        )}
+                        <div className="admin-table-primary">
+                          <strong>{entry.email}</strong>
+                          <span className="dashboard-inline-hint">
+                            {entry.missingDobCount > 0
+                              ? `${entry.missingDobCount} profile${entry.missingDobCount === 1 ? '' : 's'} missing DOB`
+                              : 'Core baby records available'}
+                          </span>
+                        </div>
                       </td>
                       <td data-label="Family Type">
                         {entry.familyType === 'twins' ? 'Twins' : 'Single baby'}
@@ -304,13 +268,6 @@ const AdminUsersSection = () => {
                           >
                             View Full Profile
                           </Link>
-                          <button
-                            className="btn btn-outline-primary btn-sm"
-                            onClick={() => startEdit(entry.email)}
-                            disabled={editingEmail === entry.email}
-                          >
-                            Edit Email
-                          </button>
                           <button
                             className="btn btn-danger btn-sm"
                             onClick={() => handleDelete(entry.email)}

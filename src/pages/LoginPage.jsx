@@ -169,10 +169,11 @@ const LoginPage = () => {
                                   className="form-control"
                                   id="email"
                                   name="email"
-                                  type="email"
-                                  placeholder="name@babybloom.com"
+                                  type="text"
+                                  placeholder="admin@gmail.com"
                                   value={formData.email}
                                   onChange={handleChange}
+                                  autoComplete="email"
                                   required
                                 />
 
@@ -191,6 +192,7 @@ const LoginPage = () => {
                                     placeholder="Enter your password"
                                     value={formData.password}
                                     onChange={handleChange}
+                                    autoComplete="current-password"
                                     required
                                   />
                                   <button

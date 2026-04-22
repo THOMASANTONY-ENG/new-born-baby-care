@@ -5,9 +5,13 @@ import { getLoggedInUser, navigateTo } from '../utils/navigation'
 const Educational = () => {
   const resources = getAvailableResources()
 
-  const handleOpenResource = () => {
+  const handleOpenResource = (resource) => {
+    if (resource.link) {
+      window.open(resource.link, '_blank', 'noopener,noreferrer')
+      return
+    }
     const user = getLoggedInUser()
-    navigateTo(user ? '/dashboard' : '/register')
+    navigateTo(user ? '/dashboard/resources' : '/register')
   }
 
   return (
@@ -30,7 +34,11 @@ const Educational = () => {
                   <h5 className='card-title'>{item.title}</h5>
                   <p className='card-text'>{item.description}</p>
                   <p className="small text-muted mb-3">{item.audience}</p>
-                  <button className='btn btn-primary' onClick={handleOpenResource}>Open Resource</button>
+                  {item.link ? (
+                    <a className='btn btn-primary' href={item.link} target="_blank" rel="noopener noreferrer">Learn More</a>
+                  ) : (
+                    <button className='btn btn-primary' onClick={() => handleOpenResource(item)}>Learn More</button>
+                  )}
                 </div>
               </div>
             </div>

@@ -166,7 +166,7 @@ const DoctorDashboard = () => {
 
   const handleShareResource = (email, resource) => {
     shareResourceWithPatient(email, resource)
-    setToastMessage(`Prescribed "${resource.title}" to ${email}`)
+    setToastMessage(`Recommended "${resource.title}" to ${email}`)
   }
 
   const handleClearContext = () => {
@@ -426,7 +426,7 @@ const DoctorDashboard = () => {
                                                     ) : resources.map(resource => (
                                                       <li key={resource.id}>
                                                         <button className="dropdown-item d-flex justify-content-between align-items-center" onClick={() => handleShareResource(patient.email, resource)}>
-                                                          <span>Prescribe: {resource.title}</span>
+                                                          <span>Recommend: {resource.title}</span>
                                                           <i className="bi bi-send-plus small opacity-50 ms-2"></i>
                                                         </button>
                                                       </li>

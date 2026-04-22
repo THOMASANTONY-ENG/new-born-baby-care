@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import '../components/style/register.css'
 import { navigateTo, saveLoggedInUser } from '../utils/navigation'
 import { userEmailExists, saveUser } from '../utils/users'
+import { saveBabyProfile } from '../utils/babyProfile'
 
 const initialForm = {
   fullName: '',
@@ -68,6 +69,19 @@ const RegisterPage = () => {
 
     saveUser(formData.email, formData.password)
     saveLoggedInUser(formData.email)
+    
+    saveBabyProfile({
+      familyType: 'single',
+      babies: [{
+        name: '',
+        dob: formData.babyDob,
+        gender: '',
+        weight: '',
+        height: '',
+      }],
+      primaryDoctorEmail: ''
+    }, formData.email)
+
     setErrorMessage('')
     setSubmitted(true)
   }
@@ -176,9 +190,10 @@ const RegisterPage = () => {
                                   id="fullName"
                                   name="fullName"
                                   type="text"
-                                  placeholder="Aanya Patel"
+                                  placeholder="fullName "
                                   value={formData.fullName}
                                   onChange={handleChange}
+                                  autoComplete="name"
                                   required
                                 />
                               </div>
@@ -195,6 +210,7 @@ const RegisterPage = () => {
                                   placeholder="parent@email.com"
                                   value={formData.email}
                                   onChange={handleChange}
+                                  autoComplete="email"
                                   required
                                 />
                               </div>
@@ -211,6 +227,7 @@ const RegisterPage = () => {
                                   placeholder="+91 98765 43210"
                                   value={formData.phone}
                                   onChange={handleChange}
+                                  autoComplete="tel"
                                   required
                                 />
                               </div>
@@ -226,6 +243,7 @@ const RegisterPage = () => {
                                   type="date"
                                   value={formData.babyDob}
                                   onChange={handleChange}
+                                  max={new Date().toISOString().split('T')[0]}
                                   required
                                 />
                               </div>
@@ -260,6 +278,7 @@ const RegisterPage = () => {
                                   placeholder="Create a password"
                                   value={formData.password}
                                   onChange={handleChange}
+                                  autoComplete="new-password"
                                   required
                                 />
                               </div>
@@ -276,6 +295,7 @@ const RegisterPage = () => {
                                   placeholder="Re-enter your password"
                                   value={formData.confirmPassword}
                                   onChange={handleChange}
+                                  autoComplete="new-password"
                                   required
                                 />
                               </div>

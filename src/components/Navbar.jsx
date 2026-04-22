@@ -1,12 +1,21 @@
 import React from 'react'
 import './style/navbar.css'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { getLoggedInUser, logoutLoggedInUser } from '../utils/navigation'
 const Navbar = () => {
+    const navigate = useNavigate()
+    const loggedInUser = getLoggedInUser()
+
+    const handleLogout = () => {
+        logoutLoggedInUser()
+        navigate('/')
+    }
     const navLinks = [
         { label: 'Home', to: '/' },
         { label: 'Features', to: '/#features' },
         { label: 'Doctors', to: '/#pediatricians' },
         { label: 'Resources', to: '/#education' },
+        { label: 'About', to: '/about' },
         { label: 'Contact', to: '/#contact' },
     ]
 
@@ -42,13 +51,25 @@ const Navbar = () => {
                             </li>
                         ))}
 
-                        <li className="nav-item ms-lg-3">
-                            <Link className="btn btn-outline-primary nav-cta secondary" to="/login">Login</Link>
-                        </li>
-
-                        <li className="nav-item ms-lg-2">
-                            <Link className="btn btn-primary nav-cta" to="/register">Register</Link>
-                        </li>
+                        {!loggedInUser ? (
+                            <>
+                                <li className="nav-item ms-lg-3">
+                                    <Link className="btn btn-outline-primary nav-cta secondary" to="/login">Login</Link>
+                                </li>
+                                <li className="nav-item ms-lg-2">
+                                    <Link className="btn btn-primary nav-cta" to="/register">Register</Link>
+                                </li>
+                            </>
+                        ) : (
+                            <>
+                                <li className="nav-item ms-lg-3">
+                                    <Link className="btn btn-outline-primary nav-cta secondary" to="/dashboard">Dashboard</Link>
+                                </li>
+                                <li className="nav-item ms-lg-2">
+                                    <button className="btn btn-primary nav-cta" onClick={handleLogout}>Logout</button>
+                                </li>
+                            </>
+                        )}
 
                     </ul>
 

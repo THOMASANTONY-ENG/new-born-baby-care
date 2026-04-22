@@ -35,6 +35,7 @@ const AdminDoctorsSection = () => {
   const [errorMessage, setErrorMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [profileFilter, setProfileFilter] = useState('all')
+  const [confirmDeleteDoctorId, setConfirmDeleteDoctorId] = useState(null)
   const [currentSlotTime, setCurrentSlotTime] = useState('')
   const DAYS_OF_WEEK = [
     { id: 'monday', label: 'Mon' },
@@ -316,20 +317,15 @@ const AdminDoctorsSection = () => {
   }
 
   const handleDeleteDoctor = (doctorId) => {
-    if (
-      window.confirm(
-        'Are you sure you want to remove this doctor profile? This action cannot be undone.'
-      )
-    ) {
-      const nextSavedDoctors = deleteDoctor(doctorId)
-      setSavedDoctors(nextSavedDoctors)
+    const nextSavedDoctors = deleteDoctor(doctorId)
+    setSavedDoctors(nextSavedDoctors)
 
-      if (doctorForm.id === doctorId) {
-        resetDoctorForm()
-      }
-
-      setToastMessage('Doctor profile removed from local storage.')
+    if (doctorForm.id === doctorId) {
+      resetDoctorForm()
     }
+
+    setConfirmDeleteDoctorId(null)
+    setToastMessage('Doctor profile removed from local storage.')
   }
 
   return (
@@ -812,13 +808,32 @@ const AdminDoctorsSection = () => {
                       >
                         Edit
                       </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        type="button"
-                        onClick={() => handleDeleteDoctor(doctor.id)}
-                      >
-                        Remove
-                      </button>
+                      {confirmDeleteDoctorId === doctor.id ? (
+                        <>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            type="button"
+                            onClick={() => handleDeleteDoctor(doctor.id)}
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            type="button"
+                            onClick={() => setConfirmDeleteDoctorId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="btn btn-outline-danger btn-sm"
+                          type="button"
+                          onClick={() => setConfirmDeleteDoctorId(doctor.id)}
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   </article>
                 ))}

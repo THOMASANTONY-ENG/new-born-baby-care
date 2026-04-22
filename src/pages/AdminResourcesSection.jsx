@@ -13,6 +13,7 @@ const initialResourceForm = {
   audience: 'Parents',
   description: '',
   image: '',
+  link: '',
 }
 
 const AdminResourcesSection = () => {
@@ -21,6 +22,7 @@ const AdminResourcesSection = () => {
   const [toastMessage, setToastMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [audienceFilter, setAudienceFilter] = useState('all')
+  const [confirmDeleteResourceId, setConfirmDeleteResourceId] = useState(null)
 
   useEffect(() => {
     if (!toastMessage) {
@@ -81,6 +83,7 @@ const AdminResourcesSection = () => {
       audience: resourceForm.audience,
       description: resourceForm.description.trim(),
       image: resourceForm.image || undefined,
+      link: resourceForm.link.trim() || undefined,
     })
 
     setSavedResources(nextSavedResources)
@@ -89,14 +92,13 @@ const AdminResourcesSection = () => {
   }
 
   const handleDeleteResource = (resourceId) => {
-    if (window.confirm('Are you sure you want to delete this resource? This action cannot be undone.')) {
-      const nextSavedResources = deleteResource(resourceId)
-      setSavedResources(nextSavedResources)
-      if (resourceForm.id === resourceId) {
-        setResourceForm(initialResourceForm)
-      }
-      setToastMessage('Resource removed from the shared library.')
+    const nextSavedResources = deleteResource(resourceId)
+    setSavedResources(nextSavedResources)
+    if (resourceForm.id === resourceId) {
+      setResourceForm(initialResourceForm)
     }
+    setConfirmDeleteResourceId(null)
+    setToastMessage('Resource removed from the shared library.')
   }
 
   const handleEditResource = (resource) => {
@@ -106,6 +108,7 @@ const AdminResourcesSection = () => {
       audience: resource.audience,
       description: resource.description,
       image: resource.image || '',
+      link: resource.link || '',
     })
   }
 
@@ -183,12 +186,29 @@ const AdminResourcesSection = () => {
                     className="form-control"
                     id="resourceDescription"
                     name="description"
-                    rows="4"
+                    rows="3"
                     value={resourceForm.description}
                     onChange={handleResourceChange}
                     placeholder="Add a short summary of what the audience will learn."
                     required
                   />
+                </div>
+
+                <div className="col-12">
+                  <label className="form-label" htmlFor="resourceLink">
+                    External Link / URL
+                    <span className="text-muted ms-2" style={{ fontWeight: 400, fontSize: '0.82rem' }}>(optional)</span>
+                  </label>
+                  <input
+                    className="form-control"
+                    id="resourceLink"
+                    name="link"
+                    type="url"
+                    value={resourceForm.link}
+                    onChange={handleResourceChange}
+                    placeholder="https://example.com/guide"
+                  />
+                  <div className="form-text">Redirects user when they click "Learn More".</div>
                 </div>
 
                 <div className="col-12">
@@ -350,7 +370,7 @@ const AdminResourcesSection = () => {
                       <p className="mb-3">{resource.description}</p>
                       <div className="admin-meta-row">
                         <span>{resource.source === 'custom' ? 'Managed by admin' : 'Built-in content'}</span>
-                        <span>{resource.image ? 'Image assigned' : 'No image'}</span>
+                        <span>{resource.link ? 'Link attached' : 'No link'}</span>
                       </div>
                     </div>
                     <div className="admin-record-actions">
@@ -361,13 +381,32 @@ const AdminResourcesSection = () => {
                       >
                         Edit
                       </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        type="button"
-                        onClick={() => handleDeleteResource(resource.id)}
-                      >
-                        Remove
-                      </button>
+                      {confirmDeleteResourceId === resource.id ? (
+                        <>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            type="button"
+                            onClick={() => handleDeleteResource(resource.id)}
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            type="button"
+                            onClick={() => setConfirmDeleteResourceId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="btn btn-outline-danger btn-sm"
+                          type="button"
+                          onClick={() => setConfirmDeleteResourceId(resource.id)}
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   </article>
                 ))}

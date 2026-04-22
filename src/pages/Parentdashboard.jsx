@@ -209,9 +209,10 @@ const ParentDashboard = () => {
   const [hiddenTwinDraft, setHiddenTwinDraft] = useState(() =>
     normalizeBabyProfile(savedProfile.babies[1] ?? emptyBabyProfile)
   )
-  const [isEditing, setIsEditing] = useState(() =>
-    !savedProfile.babies.some((profile) => hasProfileData(profile))
-  )
+  const [isEditing, setIsEditing] = useState(() => {
+    const profile = savedProfile.babies[0] || {}
+    return !profile.name || !profile.dob
+  })
   const [toastMessage, setToastMessage] = useState('')
   const [profileErrors, setProfileErrors] = useState({})
   const [sharedResources] = useState(() => getSharedResources(loggedInUser?.email))
@@ -537,6 +538,196 @@ const ParentDashboard = () => {
               {isParentView && (
                 <>
                   <section className="mb-4" aria-labelledby="care-status-heading">
+                  {(isEditing || !hasSavedProfile) ? (
+                    <form id="profile-editor" onSubmit={handleSubmit}>
+                      <div className="dashboard-form-intro mb-4">
+                        <span className="dashboard-section-card-label">
+                          {hasSavedProfile ? 'Profile editor' : dashboardTitle}
+                        </span>
+                        <h2 className="h4 mt-2 mb-2">{dashboardHeading}</h2>
+                        <p className="mb-0 text-muted">
+                          {hasSavedProfile
+                            ? 'Update the key details here, then save to refresh the dashboard overview.'
+                            : 'Choose whether this is a single baby or twins, then save the profile to unlock the rest of the dashboard.'}
+                        </p>
+                      </div>
+
+                      <div className="dashboard-family-toggle mb-4">
+                        <label className="form-label" htmlFor="familyType">
+                          Profile type
+                        </label>
+                        <select
+                          className="form-select"
+                          id="familyType"
+                          name="familyType"
+                          value={profileDraft.familyType}
+                          onChange={handleFamilyTypeChange}
+                        >
+                          <option value="single">Single baby</option>
+                          <option value="twins">Twins</option>
+                        </select>
+                      </div>
+
+                      <div className="dashboard-family-toggle mb-4">
+                        <label className="form-label" htmlFor="primaryDoctorEmail">
+                          Primary Pediatrician
+                        </label>
+                        <select
+                          className="form-select"
+                          id="primaryDoctorEmail"
+                          name="primaryDoctorEmail"
+                          value={profileDraft.primaryDoctorEmail}
+                          onChange={(e) => setProfileDraft(curr => ({ ...curr, primaryDoctorEmail: e.target.value }))}
+                        >
+                          <option value="">Select a doctor</option>
+                          {availableDoctors.map(doctor => (
+                            <option key={doctor.email} value={doctor.email}>
+                              {doctor.name} - {doctor.specialty}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="form-text text-muted small mt-1">
+                          Selecting a pediatrician allows them to view your baby's health records and send prescriptions.
+                        </p>
+                      </div>
+
+                      <div className="row g-4">
+                        {profileDraft.babies.map((profile, index) => (
+                          <div
+                            className={profileDraft.familyType === 'twins' ? 'col-lg-6' : 'col-12'}
+                            key={getBabyLabel(profileDraft.familyType, index)}
+                          >
+                            <section className="dashboard-twin-editor-card h-100">
+                              <div className="dashboard-twin-editor-header">
+                                <span className="dashboard-section-card-label">Baby profile</span>
+                                <h3 className="h5 mb-1">
+                                  {getBabyLabel(profileDraft.familyType, index)}
+                                </h3>
+                                <p className="mb-0 text-muted">
+                                  Save health details for appointments, growth tracking, and daily care.
+                                </p>
+                              </div>
+
+                              <div className="row g-3">
+                                <div className="col-12">
+                                  <label className="form-label" htmlFor={`name-${index}`}>
+                                    Baby name
+                                  </label>
+                                  <input
+                                    className="form-control"
+                                    id={`name-${index}`}
+                                    name="name"
+                                    type="text"
+                                    value={profile.name}
+                                    onChange={(event) => handleChange(index, event)}
+                                    placeholder={`Enter ${getBabyLabel(profileDraft.familyType, index).toLowerCase()} name`}
+                                  />
+                                </div>
+
+                                <div className="col-md-6">
+                                  <label className="form-label" htmlFor={`dob-${index}`}>
+                                    Date of birth
+                                  </label>
+                                  <input
+                                    className={`form-control${profileErrors[`${index}-dob`] ? ' is-invalid' : ''}`}
+                                    id={`dob-${index}`}
+                                    name="dob"
+                                    type="date"
+                                    value={profile.dob}
+                                    onChange={(event) => handleChange(index, event)}
+                                  />
+                                  {profileErrors[`${index}-dob`] && (
+                                    <div className="invalid-feedback d-block">
+                                      {profileErrors[`${index}-dob`]}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="col-md-6">
+                                  <label className="form-label" htmlFor={`gender-${index}`}>
+                                    Gender
+                                  </label>
+                                  <select
+                                    className="form-select"
+                                    id={`gender-${index}`}
+                                    name="gender"
+                                    value={profile.gender}
+                                    onChange={(event) => handleChange(index, event)}
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Male">Male</option>
+                                  </select>
+                                </div>
+
+                                <div className="col-md-6">
+                                  <label className="form-label" htmlFor={`weight-${index}`}>
+                                    Weight
+                                  </label>
+                                  <input
+                                    className="form-control"
+                                    id={`weight-${index}`}
+                                    name="weight"
+                                    type="text"
+                                    value={profile.weight}
+                                    onChange={(event) => handleChange(index, event)}
+                                    placeholder="e.g. 6.2 kg"
+                                  />
+                                </div>
+
+                                <div className="col-md-6">
+                                  <label className="form-label" htmlFor={`height-${index}`}>
+                                    Height
+                                  </label>
+                                  <input
+                                    className="form-control"
+                                    id={`height-${index}`}
+                                    name="height"
+                                    type="text"
+                                    value={profile.height}
+                                    onChange={(event) => handleChange(index, event)}
+                                    placeholder="e.g. 62 cm"
+                                  />
+                                </div>
+                              </div>
+                            </section>
+                          </div>
+                        ))}
+
+                        <div className="col-12">
+                          <div className="d-flex flex-wrap gap-3">
+                            <button
+                              className="btn btn-primary"
+                              type="submit"
+                              disabled={hasSavedProfile && !hasChanges}
+                            >
+                              {saveButtonLabel}
+                            </button>
+                            {hasSavedProfile && (
+                              <button
+                                className="btn btn-outline-secondary"
+                                type="button"
+                                onClick={() => {
+                                  setProfileDraft(savedProfile)
+                                  setHiddenTwinDraft(
+                                    normalizeBabyProfile(savedProfile.babies[1] ?? emptyBabyProfile)
+                                  )
+                                  setIsEditing(false)
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                          {hasSavedProfile && !hasChanges && (
+                            <p className="dashboard-inline-hint mt-3 mb-0">
+                              No changes to save yet. Update any field above to save again.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </form>
+                  ) : null}
                     <div className="d-flex flex-wrap justify-content-between gap-3 align-items-start mb-3">
                       <div>
                         <span className="dashboard-section-card-label">Care status</span>
@@ -741,196 +932,6 @@ const ParentDashboard = () => {
                     </section>
                   )}
 
-                  {(isEditing || !hasSavedProfile) ? (
-                    <form id="profile-editor" onSubmit={handleSubmit}>
-                      <div className="dashboard-form-intro mb-4">
-                        <span className="dashboard-section-card-label">
-                          {hasSavedProfile ? 'Profile editor' : dashboardTitle}
-                        </span>
-                        <h2 className="h4 mt-2 mb-2">{dashboardHeading}</h2>
-                        <p className="mb-0 text-muted">
-                          {hasSavedProfile
-                            ? 'Update the key details here, then save to refresh the dashboard overview.'
-                            : 'Choose whether this is a single baby or twins, then save the profile to unlock the rest of the dashboard.'}
-                        </p>
-                      </div>
-
-                      <div className="dashboard-family-toggle mb-4">
-                        <label className="form-label" htmlFor="familyType">
-                          Profile type
-                        </label>
-                        <select
-                          className="form-select"
-                          id="familyType"
-                          name="familyType"
-                          value={profileDraft.familyType}
-                          onChange={handleFamilyTypeChange}
-                        >
-                          <option value="single">Single baby</option>
-                          <option value="twins">Twins</option>
-                        </select>
-                      </div>
-
-                      <div className="dashboard-family-toggle mb-4">
-                        <label className="form-label" htmlFor="primaryDoctorEmail">
-                          Primary Pediatrician
-                        </label>
-                        <select
-                          className="form-select"
-                          id="primaryDoctorEmail"
-                          name="primaryDoctorEmail"
-                          value={profileDraft.primaryDoctorEmail}
-                          onChange={(e) => setProfileDraft(curr => ({ ...curr, primaryDoctorEmail: e.target.value }))}
-                        >
-                          <option value="">Select a doctor</option>
-                          {availableDoctors.map(doctor => (
-                            <option key={doctor.email} value={doctor.email}>
-                              {doctor.name} - {doctor.specialty}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="form-text text-muted small mt-1">
-                          Selecting a pediatrician allows them to view your baby's health records and send prescriptions.
-                        </p>
-                      </div>
-
-                      <div className="row g-4">
-                        {profileDraft.babies.map((profile, index) => (
-                          <div
-                            className={profileDraft.familyType === 'twins' ? 'col-lg-6' : 'col-12'}
-                            key={getBabyLabel(profileDraft.familyType, index)}
-                          >
-                            <section className="dashboard-twin-editor-card h-100">
-                              <div className="dashboard-twin-editor-header">
-                                <span className="dashboard-section-card-label">Baby profile</span>
-                                <h3 className="h5 mb-1">
-                                  {getBabyLabel(profileDraft.familyType, index)}
-                                </h3>
-                                <p className="mb-0 text-muted">
-                                  Save health details for appointments, growth tracking, and daily care.
-                                </p>
-                              </div>
-
-                              <div className="row g-3">
-                                <div className="col-12">
-                                  <label className="form-label" htmlFor={`name-${index}`}>
-                                    Baby name
-                                  </label>
-                                  <input
-                                    className="form-control"
-                                    id={`name-${index}`}
-                                    name="name"
-                                    type="text"
-                                    value={profile.name}
-                                    onChange={(event) => handleChange(index, event)}
-                                    placeholder={`Enter ${getBabyLabel(profileDraft.familyType, index).toLowerCase()} name`}
-                                  />
-                                </div>
-
-                                <div className="col-md-6">
-                                  <label className="form-label" htmlFor={`dob-${index}`}>
-                                    Date of birth
-                                  </label>
-                                  <input
-                                    className={`form-control${profileErrors[`${index}-dob`] ? ' is-invalid' : ''}`}
-                                    id={`dob-${index}`}
-                                    name="dob"
-                                    type="date"
-                                    value={profile.dob}
-                                    onChange={(event) => handleChange(index, event)}
-                                  />
-                                  {profileErrors[`${index}-dob`] && (
-                                    <div className="invalid-feedback d-block">
-                                      {profileErrors[`${index}-dob`]}
-                                    </div>
-                                  )}
-                                </div>
-
-                                <div className="col-md-6">
-                                  <label className="form-label" htmlFor={`gender-${index}`}>
-                                    Gender
-                                  </label>
-                                  <select
-                                    className="form-select"
-                                    id={`gender-${index}`}
-                                    name="gender"
-                                    value={profile.gender}
-                                    onChange={(event) => handleChange(index, event)}
-                                  >
-                                    <option value="">Select</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Male">Male</option>
-                                  </select>
-                                </div>
-
-                                <div className="col-md-6">
-                                  <label className="form-label" htmlFor={`weight-${index}`}>
-                                    Weight
-                                  </label>
-                                  <input
-                                    className="form-control"
-                                    id={`weight-${index}`}
-                                    name="weight"
-                                    type="text"
-                                    value={profile.weight}
-                                    onChange={(event) => handleChange(index, event)}
-                                    placeholder="e.g. 6.2 kg"
-                                  />
-                                </div>
-
-                                <div className="col-md-6">
-                                  <label className="form-label" htmlFor={`height-${index}`}>
-                                    Height
-                                  </label>
-                                  <input
-                                    className="form-control"
-                                    id={`height-${index}`}
-                                    name="height"
-                                    type="text"
-                                    value={profile.height}
-                                    onChange={(event) => handleChange(index, event)}
-                                    placeholder="e.g. 62 cm"
-                                  />
-                                </div>
-                              </div>
-                            </section>
-                          </div>
-                        ))}
-
-                        <div className="col-12">
-                          <div className="d-flex flex-wrap gap-3">
-                            <button
-                              className="btn btn-primary"
-                              type="submit"
-                              disabled={hasSavedProfile && !hasChanges}
-                            >
-                              {saveButtonLabel}
-                            </button>
-                            {hasSavedProfile && (
-                              <button
-                                className="btn btn-outline-secondary"
-                                type="button"
-                                onClick={() => {
-                                  setProfileDraft(savedProfile)
-                                  setHiddenTwinDraft(
-                                    normalizeBabyProfile(savedProfile.babies[1] ?? emptyBabyProfile)
-                                  )
-                                  setIsEditing(false)
-                                }}
-                              >
-                                Cancel
-                              </button>
-                            )}
-                          </div>
-                          {hasSavedProfile && !hasChanges && (
-                            <p className="dashboard-inline-hint mt-3 mb-0">
-                              No changes to save yet. Update any field above to save again.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </form>
-                  ) : null}
                 </>
               )}
 

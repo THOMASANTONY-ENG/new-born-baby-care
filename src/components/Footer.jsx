@@ -29,6 +29,7 @@ const Footer = () => {
             <h5>Explore</h5>
             <ul className="footer-links">
               <li><Link to="/#home">Home</Link></li>
+              <li><Link to="/about">About</Link></li>
               <li><Link to="/#features">Features</Link></li>
               <li><Link to="/#works">How It Works</Link></li>
               <li><Link to="/#testimonial">Reviews</Link></li>
